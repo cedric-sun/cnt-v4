@@ -1,6 +1,7 @@
 // cesun, 11/23/20 3:28 PM.
 
 #include "BufferedReader.hpp"
+#include <cstring>
 
 void BufferedReader::flush() {
     if (head != 0) {

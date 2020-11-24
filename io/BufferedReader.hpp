@@ -7,7 +7,6 @@
 #include "../cnt_types.hpp"
 #include "../utils/class_utils.hpp"
 #include <vector>
-#include <cstring>
 #include <cstdint>
 
 class BufferedReader : public IReader {
@@ -42,6 +41,11 @@ public:
         auto ret = *reinterpret_cast<uint32_t *>(buffer.data() + head);
         head += 4;
         return ret;
+    }
+
+    void discard(const int n) {
+        ensure(n);
+        head += n;
     }
 };
 

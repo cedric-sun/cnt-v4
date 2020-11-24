@@ -7,7 +7,7 @@
 #include "../cnt_types.hpp"
 #include "../utils/class_utils.hpp"
 #include <vector>
-#include <memory>
+#include <cstdint>
 
 class BufferedWriter : public IWriter {
 private:
