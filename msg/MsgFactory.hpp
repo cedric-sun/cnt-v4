@@ -49,26 +49,28 @@ public:
             : self_peer_id{self_peer_id}, pr{pr} {
     }
 
-    [[nodiscard]] const HandshakeMsg &getHandshake() const {
+    [[nodiscard]] const HandshakeMsg &getHandshakeMsg() const {
         static HandshakeMsg hs{self_peer_id}; // all compilation unit see unique instance
         return hs;
     }
 
-    [[nodiscard]] decltype(auto) getChoke() const { return getZeroMsg<ChokeMsg>(); }
+    // these functions instantiate function templates, and is non-trivial to be inline
+    // TODO: move them into cpp file
+    [[nodiscard]] decltype(auto) getChokeMsg() const { return getZeroMsg<ChokeMsg>(); }
 
-    [[nodiscard]] decltype(auto) getUnchoke() const { return getZeroMsg<UnchokeMsg>(); }
+    [[nodiscard]] decltype(auto) getUnchokeMsg() const { return getZeroMsg<UnchokeMsg>(); }
 
-    [[nodiscard]] decltype(auto) getInterested() const { return getZeroMsg<InterestedMsg>(); }
+    [[nodiscard]] decltype(auto) getInterestedMsg() const { return getZeroMsg<InterestedMsg>(); }
 
-    [[nodiscard]] decltype(auto) getNotInterested() const { return getZeroMsg<NotInterestedMsg>(); }
+    [[nodiscard]] decltype(auto) getNotInterestedMsg() const { return getZeroMsg<NotInterestedMsg>(); }
 
-    [[nodiscard]] decltype(auto) getHave(const int i) const { return getIndexMsg<HaveMsg>(i); }
+    [[nodiscard]] decltype(auto) getHaveMsg(const int i) const { return getIndexMsg<HaveMsg>(i); }
 
-    [[nodiscard]] const BitfieldMsg &getBitfield(const int i) const {
+    [[nodiscard]] const BitfieldMsg &getBitfieldMsg(const int i) const {
         //TODO
     }
 
-    [[nodiscard]] decltype(auto) getRequest(const int i) const {
+    [[nodiscard]] decltype(auto) getRequestMsg(const int i) const {
         return getIndexMsg<RequestMsg>(i);
     }
 

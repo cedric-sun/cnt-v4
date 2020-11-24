@@ -18,6 +18,8 @@ protected:
     void writePayloadTo(BufferedWriter &w) const override {
         // noop;
     }
+public:
+    static ZeroMsg<MT> readFrom(BufferedReader &r);
 };
 
 

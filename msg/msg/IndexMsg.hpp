@@ -20,7 +20,7 @@ protected:
         write32htonl(w, i);
     }
 public:
-    IndexMsg(const int i) : i(i) {}
+    explicit IndexMsg(const int i) : i(i) {}
 };
 
 

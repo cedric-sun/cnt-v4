@@ -6,18 +6,24 @@
 #include "Msg.hpp"
 #include "../../io/io_utils.hpp"
 #include "MsgType.hpp"
+#include <memory>
 
-template<MsgType MT>
 class ActualMsg : public Msg {
+public:
+    const MsgType type;
 protected:
-    virtual int payloadSize() const = 0;
+    [[nodiscard]] virtual int payloadSize() const = 0;
 
     virtual void writePayloadTo(BufferedWriter &w) const = 0;
 
 public:
+    explicit ActualMsg(const MsgType type) : type(type) {}
+
+    static std::unique_ptr<ActualMsg> readFrom(BufferedReader &r);
+
     void writeTo(BufferedWriter &w) const final {
         write32htonl(w, payloadSize() + 1); // +1 for MsgType
-        w.write(static_cast<Byte>(MT));
+        w.write(static_cast<Byte>(type));
         writePayloadTo(w);
     }
 };

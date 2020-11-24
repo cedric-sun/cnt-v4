@@ -19,6 +19,8 @@ public:
         w.write(prefix.data(), prefix.size());
         write32htonl(w, peer_id);
     }
+
+    static HandshakeMsg readFrom(BufferedReader &r);
 };
 
 
