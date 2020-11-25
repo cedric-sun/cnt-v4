@@ -6,17 +6,22 @@
 #include "ActualMsg.hpp"
 #include "../../PieceBitfield.hpp"
 
-class BitfieldMsg : public ActualMsg<MsgType::Bitfield> {
+class BitfieldMsg : public ActualMsg {
 private:
-    PieceBitfield pb;
+    PieceBitfield piecebf;
 protected:
     int payloadSize() const override {
-        return 0;
+        return piecebf.byteCount();
     }
 
     void writePayloadTo(BufferedWriter &w) const override {
-        //TODO
+        //TODO: lock?
+        piecebf.writeTo(w);
     }
+
+public:
+    BitfieldMsg(PieceBitfield piecebf)
+            : ActualMsg{MsgType::Bitfield}, piecebf{std::move(piecebf)} {}
 };
 
 

@@ -8,8 +8,8 @@ const std::array<Byte, 28> HandshakeMsg::prefix = {
         '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'};
 
 HandshakeMsg HandshakeMsg::readFrom(BufferedReader &r) {
-    char buf[32];
-    r.read(buf, 32);
+    char buf[prefix.size()];
+    r.read(buf, prefix.size());
     if (!std::equal(prefix.cbegin(), prefix.cend(), buf))
         panic("Mismatch in handshake prefix");
     return HandshakeMsg{read32ntohl(r)};

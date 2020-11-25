@@ -6,7 +6,7 @@
 #include "ActualMsg.hpp"
 
 template<MsgType MT>
-class IndexMsg : public ActualMsg<MT> {
+class IndexMsg : public ActualMsg {
     static_assert(MT == MsgType::Have || MT == MsgType::Request,
                   "Specified MsgType is not a IndexMsg");
 private:
@@ -19,8 +19,9 @@ protected:
     void writePayloadTo(BufferedWriter &w) const override {
         write32htonl(w, i);
     }
+
 public:
-    explicit IndexMsg(const int i) : i(i) {}
+    explicit IndexMsg(const int i) : ActualMsg{MT}, i(i) {}
 };
 
 

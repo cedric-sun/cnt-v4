@@ -6,13 +6,21 @@
 #include <memory>
 #include "ActualMsg.hpp"
 #include "../../storage/Piece.hpp"
+#include "../../utils/class_utils.hpp"
 
-class PieceMsg : public ActualMsg<MsgType::Piece> {
+class PieceMsg : public ActualMsg {
 private:
     const int i;
     std::shared_ptr<Piece> piece;
 public:
-    PieceMsg(const int i, std::shared_ptr<Piece> piece) : i(i), piece{std::move(piece)} {}
+    PieceMsg(const int i, std::shared_ptr<Piece> piece)
+            : ActualMsg{MsgType::Piece}, i(i), piece{std::move(piece)} {}
+
+    DISABLE_COPY(PieceMsg)
+
+    PieceMsg(PieceMsg &&) = default;
+
+    void operator=(PieceMsg &&) = delete;
 
 protected:
     int payloadSize() const override {
