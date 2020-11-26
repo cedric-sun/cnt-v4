@@ -19,14 +19,14 @@ private:
 
     template<typename M>
     [[nodiscard]] const M &getZeroMsg() const {
-        //TODO meta ensure M is a ZeroMsg
+        //TODO meta ensure M is a ZeroMsg instantiation
         static M instance;
         return instance;
     }
 
     template<typename M>
     [[nodiscard]] const M &getIndexMsg(const int i) const {
-        //TODO meta ensure M is a IndexMsg
+        //TODO meta ensure M is a IndexMsg instantiation
         static std::shared_mutex sm;
         static std::unordered_map<int, M> cache;
         {
@@ -36,7 +36,6 @@ private:
             }
         }
         const std::lock_guard lg{sm};
-        // IndexMsg is not movable but is trivially copyable
         auto it = cache.emplace(i, M{i}).first;
         return it->second;
     }

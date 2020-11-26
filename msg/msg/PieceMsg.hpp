@@ -20,6 +20,7 @@ public:
 
     PieceMsg(PieceMsg &&) = default;
 
+    // no explicit reason to delete the move assignment, but we don't use it for now.
     void operator=(PieceMsg &&) = delete;
 
 protected:
