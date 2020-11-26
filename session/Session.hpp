@@ -36,7 +36,7 @@ public:
     Session(const int self_peer_id, const int expected_peer_id,
             std::unique_ptr<Connection> conn_up)
             : self_peer_id{self_peer_id}, expected_peer_id{expected_peer_id},
-              conn_up{std::move(conn_up)}, msg_factory{msg_factory} {
+              conn_up{std::move(conn_up)}{
     }
 
     void start() {

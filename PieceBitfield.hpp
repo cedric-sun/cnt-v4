@@ -17,6 +17,7 @@ enum class PieceStatus : Byte {
 #include "io/BufferedReader.hpp"
 #include "io/BufferedWriter.hpp"
 
+// TODO have a immutable version so that 40 bytes mutex allocation cost is avoided
 class PieceBitfield {
 private:
     std::vector<PieceStatus> sv;
@@ -28,9 +29,10 @@ public:
     PieceBitfield(const int n_slot, bool allOwned)
             : sv(n_slot, allOwned ? PieceStatus::OWNED : PieceStatus::ABSENT) {}
 
-    PieceBitfield(PieceBitfield &&other) {
-        const std::lock_guard lg{other.m};
-        sv = std::move(other.sv);
+    // todo: ensure a will-be-moved-from object is never used by a second thread
+    PieceBitfield(PieceBitfield &&other) : sv{std::move(other.sv)} {
+        //const std::lock_guard lg{other.m};
+        //sv = std::move(other.sv);
     }
 
     void writeTo(BufferedWriter &w) const {
