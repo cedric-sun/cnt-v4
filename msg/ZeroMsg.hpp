@@ -19,8 +19,6 @@ protected:
 
 public:
     explicit ZeroMsg() : ActualMsg{MT} {}
-
-    static ZeroMsg<MT> readFrom(BufferedReader &r);
 };
 
 

@@ -4,9 +4,9 @@
 #define CNT5106_V4_BITFIELDMSG_HPP
 
 #include "ActualMsg.hpp"
-#include "../../PieceBitfield.hpp"
-#include "../../utils/uptr_cast.hpp"
-#include "../../utils/err_utils.hpp"
+#include "../piecebitfield/PieceBitfield.hpp"
+#include "../utils/uptr_cast.hpp"
+#include "../utils/err_utils.hpp"
 
 class BitfieldMsg : public ActualMsg {
 private:

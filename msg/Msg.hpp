@@ -3,7 +3,7 @@
 #ifndef CNT5106_V4_MSG_HPP
 #define CNT5106_V4_MSG_HPP
 
-#include "../../io/BufferedWriter.hpp"
+#include "../io/BufferedWriter.hpp"
 
 class Msg {
 public:

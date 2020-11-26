@@ -5,7 +5,7 @@
 
 #include "Msg.hpp"
 #include <array>
-#include "../../io/io_utils.hpp"
+#include "../io/io_utils.hpp"
 
 class HandshakeMsg : public Msg {
 public:

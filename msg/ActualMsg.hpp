@@ -4,7 +4,7 @@
 #define CNT5106_V4_ACTUALMSG_HPP
 
 #include "Msg.hpp"
-#include "../../io/io_utils.hpp"
+#include "../io/io_utils.hpp"
 #include "MsgType.hpp"
 #include <memory>
 

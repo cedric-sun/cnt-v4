@@ -5,8 +5,8 @@
 
 #include <memory>
 #include "ActualMsg.hpp"
-#include "../../storage/Piece.hpp"
-#include "../../utils/class_utils.hpp"
+#include "../storage/Piece.hpp"
+#include "../utils/class_utils.hpp"
 
 class PieceMsg : public ActualMsg {
 private:
