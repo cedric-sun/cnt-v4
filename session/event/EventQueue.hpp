@@ -23,11 +23,13 @@ public:
 
     void enq(std::unique_ptr<Event> e) {
         if (!enabled) return;
+        const std::lock_guard lg{m};
         q.push(std::move(e));
     }
 
     // precond: enabled
     std::unique_ptr<Event> deq() {
+        const std::lock_guard lg{m};
         auto eup = std::move(q.front());
         q.pop();
         return eup;

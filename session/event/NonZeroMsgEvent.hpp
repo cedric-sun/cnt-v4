@@ -4,8 +4,8 @@
 #define CNT5106_V4_NONZEROMSGEVENT_HPP
 
 #include "Event.hpp"
-#include "../../msg/msg/msg_instantiations.hpp"
-#include "../../msg/msg/PieceMsg.hpp"
+#include "../../msg/msg_instantiations.hpp"
+#include "../../msg/PieceMsg.hpp"
 #include <memory>
 
 template<typename MsgT, EventType ET>

@@ -1,7 +1,7 @@
 // cesun, 11/25/20 3:16 PM.
 
 #include "AsyncMsgScanner.hpp"
-#include "../msg/msg/ActualMsg.hpp"
+#include "../msg/ActualMsg.hpp"
 #include "event/NonZeroMsgEvent.hpp"
 #include "../utils/uptr_cast.hpp"
 

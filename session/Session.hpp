@@ -7,7 +7,9 @@
 #include "../tcp/Connection.hpp"
 #include "../io/BufferedWriter.hpp"
 #include "../io/BufferedReader.hpp"
-#include "../PieceBitfield.hpp"
+#include "../piecebitfield/SimplePieceBitfield.hpp"
+#include "../piecebitfield/SyncPieceBitfield.hpp"
+#include "AsyncMsgScanner.hpp"
 #include <memory>
 #include <thread>
 
@@ -23,10 +25,12 @@ private:
     BufferedReader br;
     BufferedWriter bw;
 
-    std::optional<PieceBitfield> peer_own;
-    PieceBitfield &self_own;
+    std::optional<SimplePieceBitfield> peer_own;
+    SyncPieceBitfield &self_own;
 
     EventQueue eq;
+
+    std::optional<AsyncMsgScanner> amsc;
 
     void setup();
 

@@ -1,30 +1,28 @@
 // cesun, 11/23/20 6:59 PM.
 
-#ifndef CNT5106_V4_PIECEBITFIELD_HPP
-#define CNT5106_V4_PIECEBITFIELD_HPP
+#ifndef CNT5106_V4_SIMPLEPIECEBITFIELD_HPP
+#define CNT5106_V4_SIMPLEPIECEBITFIELD_HPP
 
-#include "../cnt_types.hpp"
-
-// is 1 byte so that we don't need to worry about the byte order
-enum class PieceStatus : Byte {
-    ABSENT,
-    REQUESTED,
-    OWNED
-};
-
-#include <vector>
-#include <mutex>
+#include "PieceStatus.hpp"
 #include "../io/BufferedReader.hpp"
 #include "../io/BufferedWriter.hpp"
+#include "../utils/class_utils.hpp"
 
-class PieceBitfield {
-protected:
+// SimplePieceBitfield meant to be used in single thread
+class SimplePieceBitfield {
+private:
     std::vector<PieceStatus> sv;
-
-    PieceBitfield(std::vector<PieceStatus> sv) : sv{std::move(sv)} {}
 public:
-    // todo: ensure a will-be-moved-from object is never used by a second thread
-    PieceBitfield(PieceBitfield &&other) : sv{std::move(other.sv)} {}
+    explicit SimplePieceBitfield() = delete;
+
+    explicit SimplePieceBitfield(std::vector<PieceStatus> sv)
+            : sv{std::move(sv)} {}
+
+    DISABLE_COPY(SimplePieceBitfield)
+
+    SimplePieceBitfield(SimplePieceBitfield &&) = default;
+
+    SimplePieceBitfield &operator=(SimplePieceBitfield &&) = delete;
 
     void writeTo(BufferedWriter &w) const {
         // potentially sending REQUEST as well, but it doesn't matter
@@ -35,12 +33,12 @@ public:
         return sv.size();
     }
 
-    static PieceBitfield readFrom(BufferedReader &r, const int size) {
+    static SimplePieceBitfield readFrom(BufferedReader &r, const int size) {
         std::vector<PieceStatus> tmp(size);
         r.read(tmp.data(), size);
-        return PieceBitfield{std::move(tmp)};
+        return SimplePieceBitfield{std::move(tmp)};
     }
 };
 
 
-#endif //CNT5106_V4_PIECEBITFIELD_HPP
+#endif //CNT5106_V4_SIMPLEPIECEBITFIELD_HPP
