@@ -22,6 +22,8 @@ protected:
 
 public:
     explicit IndexMsg(const int i) : ActualMsg{MT}, i(i) {}
+
+    IndexMsg(IndexMsg &&) noexcept = default;
 };
 
 

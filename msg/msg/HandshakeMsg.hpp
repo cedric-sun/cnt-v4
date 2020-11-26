@@ -8,9 +8,8 @@
 #include "../../io/io_utils.hpp"
 
 class HandshakeMsg : public Msg {
-private:
-    const int peer_id;
 public:
+    const int peer_id;
     static const std::array<Byte, 28> prefix;
 
     HandshakeMsg(const int peer_id) : peer_id{peer_id} {}

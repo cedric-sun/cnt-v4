@@ -11,15 +11,11 @@
 template<typename MsgT, EventType ET>
 class NonZeroMsgEvent : public Event {
 private:
-    std::unique_ptr<MsgT> msg_up;
+    MsgT msg_up;
 public:
-    explicit NonZeroMsgEvent(std::unique_ptr<MsgT> msg_up)
-            : Event{ET}, msg_up{std::move(msg_up)} {
-    }
+    explicit NonZeroMsgEvent(MsgT msg_up) : Event{ET}, msg_up{std::move(msg_up)} {}
 
-    std::unique_ptr<MsgT> extract() {
-        return std::move(msg_up);
-    }
+    MsgT extract() { return std::move(msg_up); }
 };
 
 using HaveMsgEvent = NonZeroMsgEvent<HaveMsg, EventType::MsgHave>;
