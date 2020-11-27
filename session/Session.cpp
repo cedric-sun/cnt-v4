@@ -10,6 +10,7 @@ void Session::setup() {
     {
         // atomically snapshot the bitfield of self,
         // and enable queue to receive broadcast HAVE
+        // TODO: ensure have broadcast is also sent in critical section
         const std::lock_guard lg{self_own};
         spbf.emplace(self_own.snapshot());
         eq.enable();
@@ -27,9 +28,9 @@ void Session::setup() {
 
 void Session::protocol() {
     setup();
-    while (true) {
-        auto e = eq.deq();
-        switch (e->event_type) {
+    bool isDone = false;
+    while (!isDone) {
+        switch (auto e = eq.deq();e->event_type) {
             case EventType::TimerChoke:
                 break;
             case EventType::TimerUnchoke:
@@ -49,8 +50,10 @@ void Session::protocol() {
             case EventType::MsgRequest:
                 break;
             case EventType::MsgPiece:
-                return;
+                isDone = true;
                 break;
         }
     }
+    conn_up->close();
+    amsc->stop();
 }

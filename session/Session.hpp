@@ -10,6 +10,7 @@
 #include "../piecebitfield/SimplePieceBitfield.hpp"
 #include "../piecebitfield/SyncPieceBitfield.hpp"
 #include "AsyncMsgScanner.hpp"
+#include "status.hpp"
 #include <memory>
 #include <thread>
 
@@ -29,8 +30,12 @@ private:
     SyncPieceBitfield &self_own;
 
     EventQueue eq;
-
     std::optional<AsyncMsgScanner> amsc;
+
+    ChokeStatus self_choke; // whether self is choked by peer
+
+    std::atomic<ChokeStatus> peer_choke; // whether peer is choked by self
+    std::atomic<InterestStatus> peer_interest; // whether peer is interested in self
 
     void setup();
 
@@ -38,9 +43,11 @@ private:
 
 public:
     Session(const int self_peer_id, const int expected_peer_id,
-            std::unique_ptr<Connection> conn_up)
+            std::unique_ptr<Connection> conn_up, SyncPieceBitfield &self_own)
             : self_peer_id{self_peer_id}, expected_peer_id{expected_peer_id},
-              conn_up{std::move(conn_up)}{
+              conn_up{std::move(conn_up)}, br{*this->conn_up}, bw{*this->conn_up},
+              self_own{self_own}, self_choke{ChokeStatus::Unknown},
+              peer_choke{ChokeStatus::Unknown}, peer_interest{InterestStatus::Unknown} {
     }
 
     void start() {
@@ -57,6 +64,18 @@ public:
 
     void unchoke() {
         eq.enq(std::make_unique<Event>(EventType::TimerUnchoke));
+    }
+
+    [[nodiscard]] int64_t receivedByteCount() const {
+        return conn_up->receivedByteCount();
+    }
+
+    [[nodiscard]] ChokeStatus getPeerChoke() const {
+        return static_cast<ChokeStatus>(peer_choke);
+    }
+
+    [[nodiscard]] InterestStatus getPeerInterest() const {
+        return static_cast<InterestStatus>(peer_interest);
     }
 };
 

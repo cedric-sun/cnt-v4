@@ -28,7 +28,7 @@ std::unique_ptr<ActualMsg> ActualMsg::readFrom(BufferedReader &r) {
             ret = std::make_unique<HaveMsg>(read32ntohl(r));
             break;
         case MsgType::Bitfield: {
-            auto piecebf = PieceBitfield::readFrom(r, n - 1);
+            auto piecebf = SimplePieceBitfield::readFrom(r, n - 1);
             ret = std::make_unique<BitfieldMsg>(std::move(piecebf));
         }
             break;
