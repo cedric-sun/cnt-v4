@@ -3,33 +3,28 @@
 #ifndef CNT5106_V4_SIMPLEPIECEBITFIELD_HPP
 #define CNT5106_V4_SIMPLEPIECEBITFIELD_HPP
 
-#include "PieceStatus.hpp"
+#include "PieceBitfield.hpp"
 #include "../io/BufferedReader.hpp"
 #include "../io/BufferedWriter.hpp"
 #include "../utils/class_utils.hpp"
 
 // SimplePieceBitfield meant to be used in single thread
-class SimplePieceBitfield {
-private:
-    std::vector<PieceStatus> sv;
+class SimplePieceBitfield : public PieceBitfield {
 public:
-    explicit SimplePieceBitfield() = delete;
+    SimplePieceBitfield() = delete;
 
-    explicit SimplePieceBitfield(std::vector<PieceStatus> sv)
-            : sv{std::move(sv)} {}
+    explicit SimplePieceBitfield(std::vector<PieceStatus> sv) : PieceBitfield{std::move(sv)}{}
 
     DISABLE_COPY(SimplePieceBitfield)
 
-    SimplePieceBitfield(SimplePieceBitfield &&) = default;
-
-    SimplePieceBitfield &operator=(SimplePieceBitfield &&) = delete;
+    DEFAULT_MOVE(SimplePieceBitfield)
 
     void writeTo(BufferedWriter &w) const {
         // potentially sending REQUEST as well, but it doesn't matter
         w.write(sv.data(), sv.size());
     }
 
-    int byteCount() const {
+    [[nodiscard]] int byteCount() const {
         return sv.size();
     }
 

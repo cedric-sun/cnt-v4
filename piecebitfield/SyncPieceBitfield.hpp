@@ -4,18 +4,13 @@
 #define CNT5106_V4_SYNCPIECEBITFIELD_HPP
 
 #include <mutex>
+#include "PieceBitfield.hpp"
 #include "SimplePieceBitfield.hpp"
-#include "PieceStatus.hpp"
 
-class SyncPieceBitfield {
+class SyncPieceBitfield : public PieceBitfield {
 private:
-    std::vector<PieceStatus> sv;
     mutable std::mutex m;
 public:
-    SimplePieceBitfield snapshot() const {
-
-    }
-
     void lock() const { m.lock(); }
 
     void unlock() const { m.unlock(); }
