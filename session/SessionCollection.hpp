@@ -36,49 +36,14 @@ private:
 
     std::vector<std::unique_ptr<Sn>> ss;
 
-    /* // a hash table impl
-     * struct PnRefSet {
-    private:
-        // static constexpr lambda require -std=c++17 for clang++
-        static constexpr auto rwsn_hasher = [](const auto &refw) { // C++14 Generic Lambda
-            static std::hash<decltype(&refw.get())> hasher{};
-            return hasher(&refw.get());
-        };
-        std::unordered_set<std::reference_wrapper<Sn>, decltype(rwsn_hasher)> pns{8, rwsn_hasher};
-        using ssci = decltype(ss)::const_iterator;
-    public:
-        explicit PnRefSet(ssci first, ssci last) {
-            while (first != last) {
-                pns.emplace(**first);
-                ++first;
-            }
-        }
-
-        explicit PnRefSet(PnRefSet &&) = default;
-
-        // set difference
-        std::vector<std::reference_wrapper<Sn>> operator-(const PnRefSet &rhs) const {
-            std::vector<std::reference_wrapper<Sn>> ret;
-            ret.reserve(4);
-            std::set_difference(pns.cbegin(), pns.cend(), rhs.pns.cbegin(), rhs.pns.cend(),
-                                std::back_inserter(ret),
-                                [](const auto &rw_a, const auto &rw_b) {
-                                    return (&rw_a.get()) < (&rw_b.get());
-                                });
-            return ret;
-        }
-
-        void unchokeAll() {
-            for (Sn &lang_ref : pns) {
-                lang_ref.s.unchoke();
-            }
-        }
-    };
-     */
     struct SnRefSet {
     private:
         std::vector<std::reference_wrapper<Sn>> pns;
         using ssci = decltype(ss)::const_iterator;
+
+        static constexpr auto rwcomp = [](const auto &a, const auto &b) {
+            return &a.get() < &b.get();
+        };
 
         explicit SnRefSet() = default;
 
@@ -88,6 +53,7 @@ private:
                 pns.emplace_back(**first);
                 ++first;
             }
+            std::sort(pns.begin(), pns.end(), rwcomp);
         }
 
         SnRefSet(SnRefSet &&) = default;
@@ -99,10 +65,7 @@ private:
             SnRefSet ret;
             ret.pns.reserve(4);
             std::set_difference(pns.cbegin(), pns.cend(), rhs.pns.cbegin(), rhs.pns.cend(),
-                                std::back_inserter(ret.pns),
-                                [](const auto &rw_a, const auto &rw_b) {
-                                    return (&rw_a.get()) < (&rw_b.get());
-                                });
+                                std::back_inserter(ret.pns), rwcomp);
             return ret;
         }
 
