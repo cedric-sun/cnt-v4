@@ -5,6 +5,8 @@
 
 #include "PieceStatus.hpp"
 #include "../utils/class_utils.hpp"
+#include "../io/BufferedWriter.hpp"
+#include "../io/BufferedReader.hpp"
 #include <vector>
 
 class PieceBitfield {
@@ -23,6 +25,25 @@ public:
 
     // returns a vector of sorted indexes the piece-bit at which is OWNED in lhs but ABSENT in rhs
     std::vector<int> operator-(const PieceBitfield &rhs) const;
+
+    PieceStatus& operator[](const int i) {
+        return sv[i];
+    }
+
+    void writeTo(BufferedWriter &w) const {
+        // potentially sending REQUEST as well, but it doesn't matter
+        w.write(sv.data(), sv.size());
+    }
+
+    [[nodiscard]] int byteCount() const {
+        return sv.size();
+    }
+
+    static PieceBitfield readFrom(BufferedReader &r, const int size) {
+        std::vector<PieceStatus> tmp(size);
+        r.read(tmp.data(), size);
+        return PieceBitfield{std::move(tmp)};
+    }
 };
 
 
