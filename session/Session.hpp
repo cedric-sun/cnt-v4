@@ -4,16 +4,17 @@
 #define CNT5106_V4_SESSION_HPP
 
 #include "event/EventQueue.hpp"
+#include "event/BcastHaveEvent.hpp"
 #include "../tcp/Connection.hpp"
 #include "../io/BufferedWriter.hpp"
 #include "../io/BufferedReader.hpp"
 #include "../piecebitfield/SimplePieceBitfield.hpp"
-#include "../piecebitfield/SyncPieceBitfield.hpp"
 #include "AsyncMsgScanner.hpp"
 #include "status.hpp"
 #include <memory>
 #include <thread>
 
+class SyncPieceBitfield;
 
 class Session {
 public:
@@ -32,10 +33,13 @@ private:
     EventQueue eq;
     std::optional<AsyncMsgScanner> amsc;
 
-    ChokeStatus self_choke; // whether self is choked by peer
+    ChokeStatus self_choke{ChokeStatus::Unknown}; // whether self is choked by peer
 
-    std::atomic<ChokeStatus> peer_choke; // whether peer is choked by self
-    std::atomic<InterestStatus> peer_interest; // whether peer is interested in self
+    // whether peer is choked by self
+    std::atomic<ChokeStatus> peer_choke{ChokeStatus::Unknown};
+
+    // whether peer is interested in self
+    std::atomic<InterestStatus> peer_interest{InterestStatus::Unknown};
 
     void setup();
 
@@ -46,8 +50,7 @@ public:
             std::unique_ptr<Connection> conn_up, SyncPieceBitfield &self_own)
             : self_peer_id{self_peer_id}, expected_peer_id{expected_peer_id},
               conn_up{std::move(conn_up)}, br{*this->conn_up}, bw{*this->conn_up},
-              self_own{self_own}, self_choke{ChokeStatus::Unknown},
-              peer_choke{ChokeStatus::Unknown}, peer_interest{InterestStatus::Unknown} {
+              self_own{self_own}{
     }
 
     void start() {
@@ -55,7 +58,7 @@ public:
     }
 
     void ackHave(const int i) {
-        eq.enq(std::make_unique<Event>(EventType::BcastHave));
+        eq.enq(std::make_unique<BcastHaveEvent>(i));
     }
 
     void choke() {

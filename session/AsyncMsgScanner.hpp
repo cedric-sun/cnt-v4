@@ -3,12 +3,11 @@
 #ifndef CNT5106_V4_ASYNCMSGSCANNER_HPP
 #define CNT5106_V4_ASYNCMSGSCANNER_HPP
 
-#include "event/EventQueue.hpp"
-#include "../io/BufferedReader.hpp"
 #include "../utils/err_utils.hpp"
-#include "../msg/HandshakeMsg.hpp"
-#include "../msg/BitfieldMsg.hpp"
 #include <thread>
+
+class BufferedReader;
+class EventQueue;
 
 class AsyncMsgScanner {
 private:

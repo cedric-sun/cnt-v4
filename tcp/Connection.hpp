@@ -9,11 +9,14 @@
 #include "../utils/err_utils.hpp"
 #include <sys/socket.h>
 #include <utility>
+#include <atomic>
+#include <cstdint>
 
 class Connection : public IReader, public IWriter {
 private:
-    int fd;
     static const int RUIN_FD = -1;
+    int fd;
+    std::atomic_int64_t recv_bcnt{0};
 public:
     explicit Connection(int fd) : fd{fd} {}
 
@@ -31,6 +34,7 @@ public:
         int n = ::recv(fd, buf, length, 0);
         if (n == -1)
             panic("::recv() failure");
+        recv_bcnt += n;
         return n;
     }
 
@@ -45,6 +49,10 @@ public:
             ::close(fd);
             fd = RUIN_FD;
         }
+    }
+
+    [[nodiscard]] int64_t receivedByteCount() const {
+        return static_cast<int64_t>(recv_bcnt);
     }
 };
 

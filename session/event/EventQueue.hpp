@@ -30,6 +30,7 @@ public:
     // precond: enabled
     std::unique_ptr<Event> deq() {
         const std::lock_guard lg{m};
+        //TODO: block when queue is empty!!!!!
         auto eup = std::move(q.front());
         q.pop();
         return eup;

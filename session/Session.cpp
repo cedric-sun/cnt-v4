@@ -3,6 +3,9 @@
 #include "Session.hpp"
 #include "../msg/HandshakeMsg.hpp"
 #include "../msg/BitfieldMsg.hpp"
+#include "../piecebitfield/SyncPieceBitfield.hpp"
+#include "../msg/msg_instantiations.hpp"
+#include "event/NonZeroMsgEvent.hpp"
 
 void Session::setup() {
     HandshakeMsg{self_peer_id}.writeTo(bw);
@@ -32,14 +35,26 @@ void Session::protocol() {
     while (!isDone) {
         switch (auto e = eq.deq();e->event_type) {
             case EventType::TimerChoke:
+                if (peer_choke != ChokeStatus::Choked) {
+                    peer_choke = ChokeStatus::Choked;
+                    ChokeMsg{}.writeTo(bw);
+                }
                 break;
             case EventType::TimerUnchoke:
+                if (peer_choke != ChokeStatus::Unchoked) {
+                    peer_choke = ChokeStatus::Unchoked;
+                    UnchokeMsg{}.writeTo(bw);
+                }
                 break;
             case EventType::BcastHave:
+                HaveMsg{static_cast<BcastHaveEvent *>(e.get())->piece_id}.writeTo(bw);
                 break;
             case EventType::MsgChoke:
+                self_choke = ChokeStatus::Choked;
                 break;
             case EventType::MsgUnchoke:
+                self_choke = ChokeStatus::Unchoked;
+                //TODO: FIRE REQUEST!
                 break;
             case EventType::MsgInterest:
                 break;

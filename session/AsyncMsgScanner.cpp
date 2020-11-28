@@ -5,6 +5,8 @@
 #include "event/NonZeroMsgEvent.hpp"
 #include "../utils/uptr_cast.hpp"
 
+#include "event/EventQueue.hpp"
+
 void AsyncMsgScanner::scanLoop() {
     while (true) {
         auto amsg_up = ActualMsg::readFrom(br);
