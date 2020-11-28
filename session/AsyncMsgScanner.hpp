@@ -14,7 +14,7 @@ class AsyncMsgScanner {
 private:
     EventQueue &q;
     BufferedReader &br;
-    std::optional<std::thread> tup;
+    std::optional<std::thread> tup{std::nullopt};
 
     void scanLoop();
 

@@ -12,6 +12,7 @@ static int randomInt(const int upper) {
     static std::uniform_int_distribution uniform{};
     return uniform(rng) % upper;
 }
+
 #include <thread>
 #include <chrono>
 
@@ -30,42 +31,60 @@ static void setInterval(CallBackFunc cb, const int sec) {
 
 SessionCollection::SessionCollection(const int pn_interval, const int opt_interval,
                                      const int n_pn) {
-    setInterval([n_pn, this] { pn_algorithm(n_pn); }, pn_interval);
-    setInterval([this] { opt_algorithm(); }, opt_interval);
+    setInterval([n_pn, this] { pnAlgorithm(n_pn); }, pn_interval);
+    setInterval([this] { optAlgorithm(); }, opt_interval);
 }
 
-void SessionCollection::pn_algorithm(const int n_pn) {
+void SessionCollection::pnAlgorithm(const int n_pn) {
     const std::lock_guard lg{m};
     for (auto &e : ss) {
-        e.updateByteCount();
-        e.updatePeerInterest();
+        e->updateByteCount();
+        e->updatePeerInterest();
     }
-    std::nth_element(ss.begin(), ss.begin() + n_pn, ss.end(),
-                     [](const auto &sn0, const auto &sn1) {
-                         if (sn0.peer_interest == InterestStatus::Unknown
-                             || sn0.peer_interest == InterestStatus::NotInterested)
+    const int nn_pn = std::min(n_pn, static_cast<int>(ss.size()));
+    std::nth_element(ss.begin(), ss.begin() + nn_pn, ss.end(),
+                     [](const auto &a, const auto &b) {
+                         if (a->peer_interest == InterestStatus::Unknown
+                             || a->peer_interest == InterestStatus::NotInterested)
                              return false;
-                         if (sn0.peer_interest == InterestStatus::Interested &&
-                             (sn1.peer_interest == InterestStatus::NotInterested
-                              || sn1.peer_interest == InterestStatus::Unknown))
+                         if (a->peer_interest == InterestStatus::Interested &&
+                             (b->peer_interest == InterestStatus::NotInterested
+                              || b->peer_interest == InterestStatus::Unknown))
                              return true;
-                         return (sn0.neo - sn0.old) < (sn1.neo - sn1.old);
+                         return (a->neo - a->old) < (b->neo - b->old);
                      });
-    std::for_each_n(ss.begin(), n_pn, [](auto &e) { e.s->unchoke(); });
+    SnRefSet new_pn_set{ss.cbegin(), ss.cbegin() + nn_pn};
+    if (pn_set.has_value()) {
+        auto supplanted = *pn_set - new_pn_set;
+        if (supplanted.empty()) { // promotion happened;
+            supplanted.chokeAll();
+            opt.reset();
+        }
+        // if promotion doesn't happen, nothing need to be done.
+    }
+    new_pn_set.unchokeAll();
+    pn_set = std::move(new_pn_set);
 }
 
-void SessionCollection::opt_algorithm() {
+// either absolutely don't send choke (when promotion happened during last opt interval),
+// or absolute send choke to previous opt (when that does not happened during last opt interval)
+void SessionCollection::optAlgorithm() {
     const std::lock_guard lg{m};
     for (auto &e : ss) {
-        e.updatePeerChoke();
-        e.updatePeerInterest();
+        e->updatePeerChoke();
+        e->updatePeerInterest();
     }
-    std::vector<Sn *> eligibles;
+    std::vector<std::reference_wrapper<Sn>> eligibles;
     eligibles.reserve(ss.size());
-    for (auto &e : ss) {
-        if (e.peer_choke == ChokeStatus::Choked &&
-            e.peer_interest == InterestStatus::Interested)
-            eligibles.push_back(&e);
+    for (auto &sn_up : ss) {
+        if (sn_up->peer_choke == ChokeStatus::Choked &&
+            sn_up->peer_interest == InterestStatus::Interested)
+            eligibles.emplace_back(*sn_up);
     }
-    eligibles[randomInt(eligibles.size())]->s->unchoke();
+    auto lucky_rw = eligibles[randomInt(eligibles.size())];
+    if (opt.has_value()) { // promotion does not happen during last opt interval
+        opt->get().s.choke();
+    }
+    // if promotion does happen, nothing need to be done.
+    opt = lucky_rw;
 }
