@@ -12,7 +12,7 @@ class ActualMsg : public Msg {
 public:
     const MsgType type;
 protected:
-    virtual int payloadSize() const = 0;
+    [[nodiscard]] virtual int payloadSize() const = 0;
 
     virtual void writePayloadTo(BufferedWriter &w) const = 0;
 

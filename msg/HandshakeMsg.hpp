@@ -12,7 +12,7 @@ public:
     const int peer_id;
     static const std::array<Byte, 28> prefix;
 
-    HandshakeMsg(const int peer_id) : peer_id{peer_id} {}
+    explicit HandshakeMsg(const int peer_id) : peer_id{peer_id} {}
 
     void writeTo(BufferedWriter &w) const override {
         w.write(prefix.data(), prefix.size());

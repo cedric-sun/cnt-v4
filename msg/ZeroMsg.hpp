@@ -11,7 +11,7 @@ class ZeroMsg : public ActualMsg {
                   || MT == MsgType::Interested || MT == MsgType::NotInterested,
                   "Specified MsgType is not a ZeroMsg");
 protected:
-    int payloadSize() const override { return 0; }
+    [[nodiscard]] int payloadSize() const override { return 0; }
 
     void writePayloadTo(BufferedWriter &w) const override {
         //noop

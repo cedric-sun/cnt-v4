@@ -26,7 +26,7 @@ public:
 
     Connection(Connection &&other) noexcept: fd{std::exchange(other.fd, RUIN_FD)} {}
 
-    Connection &operator=(Connection &&other) = delete;
+    void operator=(Connection &&) = delete;
 
     ~Connection() override { close(); }
 

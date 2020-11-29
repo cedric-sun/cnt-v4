@@ -4,30 +4,29 @@
 #define CNT5106_V4_BITFIELDMSG_HPP
 
 #include "ActualMsg.hpp"
-#include "../piecebitfield/SimplePieceBitfield.hpp"
+#include "../piecebitfield/PieceBitfieldSnapshot.hpp"
 #include "../utils/uptr_cast.hpp"
 #include "../utils/err_utils.hpp"
 
 class BitfieldMsg : public ActualMsg {
 private:
-    SimplePieceBitfield spbf;
+    PieceBitfieldSnapshot snapshot;
 protected:
-    int payloadSize() const override {
-        return spbf.byteCount();
+    [[nodiscard]] int payloadSize() const override {
+        return piecebf.byteCount();
     }
 
     void writePayloadTo(BufferedWriter &w) const override {
         //TODO: lock?
-        spbf.writeTo(w);
+        piecebf.writeTo(w);
     }
 
 public:
-    // force client to use SyncPieceBitfield::snapshot()
-    BitfieldMsg(SimplePieceBitfield &&piecebf)
-            : ActualMsg{MsgType::Bitfield}, spbf{std::move(piecebf)} {}
+    explicit BitfieldMsg(PieceBitfield &&piecebf)
+            : ActualMsg{MsgType::Bitfield}, piecebf{std::move(piecebf)} {}
 
-    SimplePieceBitfield extract() {
-        return std::move(spbf);
+    PieceBitfield extract() {
+        return std::move(piecebf);
     }
 
     static std::unique_ptr<BitfieldMsg> readFrom(BufferedReader &r) {
