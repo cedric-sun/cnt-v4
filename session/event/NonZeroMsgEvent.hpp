@@ -10,17 +10,24 @@
 
 template<typename MsgT, EventType ET>
 class NonZeroMsgEvent : public Event {
-private:
-    MsgT msg_up;
+protected:
+    MsgT msg;
 public:
-    explicit NonZeroMsgEvent(MsgT msg_up) : Event{ET}, msg_up{std::move(msg_up)} {}
+    explicit NonZeroMsgEvent(MsgT msg) : Event{ET}, msg{std::move(msg)} {}
 
-    MsgT extract() { return std::move(msg_up); }
+    virtual MsgT extract() { return msg; }
 };
 
 using HaveMsgEvent = NonZeroMsgEvent<HaveMsg, EventType::MsgHave>;
 using RequestMsgEvent = NonZeroMsgEvent<RequestMsg, EventType::MsgRequest>;
-using PieceMsgEvent = NonZeroMsgEvent<PieceMsg, EventType::MsgPiece>;
+
+class PieceMsgEvent : public NonZeroMsgEvent<PieceMsg, EventType::MsgPiece> {
+public:
+    // UB when called twice
+    PieceMsg extract() override {
+        return std::move(msg);
+    }
+};
 
 
 #endif //CNT5106_V4_NONZEROMSGEVENT_HPP
