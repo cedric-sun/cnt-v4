@@ -22,7 +22,7 @@ public:
             : File{openExisting(path)},
               mSize{static_cast<int64_t>(std::filesystem::file_size(path))} {}
 
-    void writeAt(int pos, const void *buf, int length) override {
+    void writeAt(int64_t pos, const void *buf, int64_t length) override {
         panic("file is not writable.");
     }
 

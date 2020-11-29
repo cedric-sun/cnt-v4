@@ -24,11 +24,11 @@ public:
 
     DISABLE_COPY(Connection)
 
-    Connection(Connection &&other) : fd{std::exchange(other.fd, RUIN_FD)} {}
+    Connection(Connection &&other) noexcept: fd{std::exchange(other.fd, RUIN_FD)} {}
 
-    void operator=(Connection &&) = delete;
+    Connection &operator=(Connection &&other) = delete;
 
-    ~Connection() { close(); }
+    ~Connection() override { close(); }
 
     int read(void *buf, int length) override {
         int n = ::recv(fd, buf, length, 0);

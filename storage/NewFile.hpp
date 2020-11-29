@@ -20,7 +20,7 @@ public:
     explicit NewFile(const std::string &path, const int64_t size)
             : File{openNew(path)}, mSize{size} {}
 
-    void writeAt(int pos, const void *buf, int length) override {
+    void writeAt(int64_t pos, const void *buf, int64_t length) override {
         if (std::fseek(f, pos, SEEK_SET) != 0)
             panic("fseek failed");
         if (std::fwrite(buf, 1, length, f) != length)
