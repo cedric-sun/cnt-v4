@@ -1,9 +1,10 @@
 // cesun, 11/28/20 12:37 AM.
 
 #include "PieceBitfield.hpp"
-#include "../utils/err_utils.hpp"
+#include "SyncPieceBitfield.hpp"
 
-std::vector<int> PieceBitfield::operator-(const PieceBitfield &rhs) const {
+std::vector<int> PieceBitfield::operator-(const SyncPieceBitfield &rhs) const {
+    std::lock_guard lg{rhs};
     if (sv.size() != rhs.sv.size())
         panic("operands size is not identical");
     std::vector<int> ret;

@@ -22,11 +22,11 @@ protected:
     }
 
 public:
-    explicit BitfieldMsg(PieceBitfield &&piecebf)
-            : ActualMsg{MsgType::Bitfield}, piecebf{std::move(piecebf)} {}
+    explicit BitfieldMsg(PieceBitfieldSnapshot &&snapshot)
+            : ActualMsg{MsgType::Bitfield}, snapshot{std::move(snapshot)} {}
 
     PieceBitfield extract() {
-        return std::move(piecebf);
+        return std::move(snapshot);
     }
 
     static std::unique_ptr<BitfieldMsg> readFrom(BufferedReader &r) {

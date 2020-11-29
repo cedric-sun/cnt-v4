@@ -4,45 +4,53 @@
 #define CNT5106_V4_PIECEBITFIELD_HPP
 
 #include "PieceStatus.hpp"
+#include "PieceBitfieldSnapshot.hpp"
 #include "../utils/class_utils.hpp"
-#include "../io/BufferedWriter.hpp"
-#include "../io/BufferedReader.hpp"
+#include "../utils/err_utils.hpp"
 #include <vector>
 
+class SyncPieceBitfield;
+
 class PieceBitfield {
-protected:
+private:
     std::vector<PieceStatus> sv;
+    int n_owned;
+
+protected:
+    explicit PieceBitfield(const int size, bool owningAllPiece)
+            : sv(size, owningAllPiece ? PieceStatus::OWNED : PieceStatus::ABSENT),
+              n_owned{owningAllPiece ? size : 0} {}
+
 public:
-    PieceBitfield() = delete;
+    explicit PieceBitfield(PieceBitfieldSnapshot &&pb_snap) : sv{std::move(pb_snap.sv)} {
+        n_owned = 0;
+        for (const auto &e : sv) {
+            if (e == PieceStatus::OWNED)
+                n_owned++;
+        }
+    }
 
-    explicit PieceBitfield(std::vector<PieceStatus> sv) : sv{std::move(sv)} {}
-
-    DISABLE_COPY(PieceBitfield)
-
-    DEFAULT_MOVE(PieceBitfield)
+    DFT_MOVE_CTOR_ONLY(PieceBitfield)
 
     virtual ~PieceBitfield() = default;
 
     // returns a vector of sorted indexes the piece-bit at which is OWNED in lhs but ABSENT in rhs
-    std::vector<int> operator-(const PieceBitfield &rhs) const;
+    std::vector<int> operator-(const SyncPieceBitfield &rhs) const;
 
-    PieceStatus& operator[](const int i) {
-        return sv[i];
+    virtual void setOwned(const int i) {
+        if (i < 0 || i >= sv.size())
+            panic("setOwn index out of bound.");
+        if (sv[i] == PieceStatus::OWNED)
+            panic("piece already owned!");
+        sv[i] = PieceStatus::OWNED;
+        n_owned++;
     }
 
-    void writeTo(BufferedWriter &w) const {
-        // potentially sending REQUEST as well, but it doesn't matter
-        w.write(sv.data(), sv.size());
-    }
-
-    [[nodiscard]] int byteCount() const {
-        return sv.size();
-    }
-
-    static PieceBitfield readFrom(BufferedReader &r, const int size) {
-        std::vector<PieceStatus> tmp(size);
-        r.read(tmp.data(), size);
-        return PieceBitfield{std::move(tmp)};
+    [[nodiscard]]  virtual bool owningAll() const {
+        return n_owned == sv.size();
+        // TODO: improve concurrent performance
+        //      In the thread-safe derived class, we acquires its lock purely for testing this
+        //      condition here;
     }
 };
 

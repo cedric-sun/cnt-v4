@@ -5,12 +5,32 @@
 
 #include <mutex>
 #include "PieceBitfield.hpp"
-#include "SimplePieceBitfield.hpp"
+#include "PieceBitfieldSnapshot.hpp"
 
 class SyncPieceBitfield : public PieceBitfield {
 private:
     mutable std::mutex m;
 public:
+    explicit SyncPieceBitfield(const int size, bool owningAllPiece)
+            : PieceBitfield{size, owningAllPiece} {}
+
+    PieceBitfieldSnapshot snapshot() const {
+        const std::lock_guard lg{m};
+        // potentially sending REQUEST as well, but it doesn't matter
+        return PieceBitfieldSnapshot{sv}; // copy
+    }
+
+    void setOwned(const int i) override {
+        const std::lock_guard lg{m};
+        PieceBitfield::setOwned(i);
+    }
+
+    bool owningAll() const override {
+        const std::lock_guard lg{m};
+        return PieceBitfield::owningAll();
+    }
+
+
     void lock() const { m.lock(); }
 
     void unlock() const { m.unlock(); }
