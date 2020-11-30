@@ -1,17 +1,12 @@
 // cesun, 11/27/20 12:32 AM.
 
 #include "SessionCollection.hpp"
-#include <random>
+#include "../utils/MathUtils.hpp"
 
 //TODO: what if pn / opt interval is sooooo short that pn / opt is selected again before
 // the selected pn / opt sessions' event queue can handle the unchoke event and change it's
 // peer_choke?
 
-static int randomInt(const int upper) {
-    static std::default_random_engine rng{std::random_device{}()};
-    static std::uniform_int_distribution uniform{};
-    return uniform(rng) % upper;
-}
 
 #include <thread>
 #include <chrono>
@@ -81,7 +76,7 @@ void SessionCollection::optAlgorithm() {
             sn_up->peer_interest == InterestStatus::Interested)
             eligibles.emplace_back(*sn_up);
     }
-    auto lucky_rw = eligibles[randomInt(eligibles.size())];
+    auto lucky_rw = eligibles[MathUtils::randomInt(eligibles.size())];
     if (opt.has_value()) { // promotion does not happen during last opt interval
         opt->get().s.choke();
     }

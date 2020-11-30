@@ -10,6 +10,8 @@ class BufferedReader;
 class EventQueue;
 
 class AsyncMsgScanner {
+public:
+    DISABLE_COPY_MOVE(AsyncMsgScanner)
 private:
     EventQueue &q;
     BufferedReader &br;

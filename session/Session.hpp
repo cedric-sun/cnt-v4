@@ -8,29 +8,40 @@
 #include "../tcp/Connection.hpp"
 #include "../io/BufferedWriter.hpp"
 #include "../io/BufferedReader.hpp"
-#include "../piecebitfield/SimplePieceBitfield.hpp"
+#include "../piecebitfield/PieceBitfield.hpp"
 #include "AsyncMsgScanner.hpp"
 #include "status.hpp"
 #include <memory>
 #include <thread>
+#include <functional>
+#include <utility>
 
 class SyncPieceBitfield;
 
+class Logger;
+
+class PieceRepository;
+
 class Session {
 public:
+    DISABLE_COPY_MOVE(Session)
+
     static const int EPID_NO_PREFERENCE = -1;
 private:
-    int peer_id;
     const int self_peer_id, expected_peer_id;
-    std::unique_ptr<Connection> conn_up;
-    std::optional<std::thread> prot_th;
+    Connection conn;
     BufferedReader br;
     BufferedWriter bw;
-
-    std::optional<SimplePieceBitfield> peer_own;
+    PieceRepository &repo;
     SyncPieceBitfield &self_own;
+    std::function<void(void)> end_cb;
+    Logger &logger;
 
-    EventQueue eq;
+    EventQueue eq{};
+
+    int peer_id;
+    std::optional<std::thread> prot_th{std::nullopt};
+    std::optional<PieceBitfield> peer_own;
     std::optional<AsyncMsgScanner> amsc;
 
     ChokeStatus self_choke{ChokeStatus::Unknown}; // whether self is choked by peer
@@ -46,11 +57,12 @@ private:
     void protocol();
 
 public:
-    Session(const int self_peer_id, const int expected_peer_id,
-            std::unique_ptr<Connection> conn_up, SyncPieceBitfield &self_own)
-            : self_peer_id{self_peer_id}, expected_peer_id{expected_peer_id},
-              conn_up{std::move(conn_up)}, br{*this->conn_up}, bw{*this->conn_up},
-              self_own{self_own}{
+    explicit Session(const int self_peer_id, const int expected_peer_id,
+                     Connection &&conn, PieceRepository &repo, SyncPieceBitfield &self_own,
+                     std::function<void(void)> end_cb, Logger &logger)
+            : self_peer_id{self_peer_id}, expected_peer_id{expected_peer_id}, conn{std::move(conn)},
+              br{conn}, bw{conn}, repo{repo}, self_own{self_own}, end_cb{std::move(end_cb)},
+              logger{logger} {
     }
 
     void start() {
@@ -69,14 +81,17 @@ public:
         eq.enq(std::make_unique<Event>(EventType::TimerUnchoke));
     }
 
+    // thread-safe
     [[nodiscard]] int64_t receivedByteCount() const {
-        return conn_up->receivedByteCount();
+        return conn.receivedByteCount();
     }
 
+    // thread-safe
     [[nodiscard]] ChokeStatus getPeerChoke() const {
         return static_cast<ChokeStatus>(peer_choke);
     }
 
+    // thread-safe
     [[nodiscard]] InterestStatus getPeerInterest() const {
         return static_cast<InterestStatus>(peer_interest);
     }
