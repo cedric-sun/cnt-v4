@@ -3,61 +3,65 @@
 #ifndef CNT5106_V4_SYNCPIECEBITFIELD_HPP
 #define CNT5106_V4_SYNCPIECEBITFIELD_HPP
 
-#include <mutex>
-#include "PieceBitfield.hpp"
+#include "AbstractPieceBitfield.hpp"
 #include "PieceBitfieldSnapshot.hpp"
+#include <mutex>
+#include <atomic>
 
-class SyncPieceBitfield : public PieceBitfield {
-    friend std::vector<int> PieceBitfield::operator-(const SyncPieceBitfield &rhs) const;
-
+class SyncPieceBitfield : public AbstractPieceBitfield {
 private:
+    std::atomic_int n_owned;
     mutable std::mutex m;
+
+    void lock() const override {
+        m.lock();
+    }
+
+    void unlock() const override {
+        m.unlock();
+    }
+
+    bool try_lock() const override {
+        return m.try_lock();
+    }
+
 public:
     explicit SyncPieceBitfield(const int size, bool owningAllPiece)
-            : PieceBitfield{size, owningAllPiece} {}
+            : AbstractPieceBitfield{
+            std::vector(size, owningAllPiece ? PieceStatus::OWNED : PieceStatus::ABSENT)} {}
 
-    //thread safe
     PieceBitfieldSnapshot snapshot() const {
+        std::vector<PieceStatus> tmp(sv.size());
         const std::lock_guard lg{m};
         // actually sending PieceStatus::Request doesn't matter; for sanity we filter it for now.
-        std::vector<PieceStatus> tmp(sv.size());
         std::transform(sv.cbegin(), sv.cend(), tmp.begin(), [](const auto &e) {
             return e == PieceStatus::REQUESTED ? PieceStatus::ABSENT : e;
         });
         return PieceBitfieldSnapshot{std::move(tmp)};
     }
 
-    //thread safe
-    void setOwned(const int i) override {
-        if (i < 0 || i >= sv.size())
-            panic("setOwn index out of bound.");
-        const std::lock_guard lg{m};
-        if (sv[i] != PieceStatus::REQUESTED)
-            panic("setting a un-requested slot to OWNED");
-        sv[i] = PieceStatus::OWNED;
-        n_owned++;
-    }
-
-    //thread safe
-    void setRequested(const int i) {
-        const std::lock_guard lg{m};
-        if (i < 0 || i >= sv.size())
-            panic("setRequested index out of bound.");
-        if (sv[i] != PieceStatus::ABSENT)
-            panic("setRequested on a non-ABSENT slot!");
-        sv[i] = PieceStatus::REQUESTED;
-    }
-
-    //thread safe
-    bool owningAll() const override {
-        const std::lock_guard lg{m};
-        return PieceBitfield::owningAll();
-    }
-
-    //thread safe
-    bool isOwned(const int i) const {
+    bool isOwned(const int i) const override {
+        checkRange(i);
         const std::lock_guard lg{m};
         return sv[i] == PieceStatus::OWNED;
+    }
+
+    void setOwned(const int i) override {
+        checkRange(i);
+        const std::lock_guard lg{m};
+        if (sv[i] != PieceStatus::OWNED)
+            n_owned++;
+        sv[i] = PieceStatus::OWNED;
+    }
+
+    bool owningAll() const override {
+        return static_cast<int>(n_owned) == sv.size();
+    }
+
+    void setRequested(const int i) {
+        checkRange(i);
+        const std::lock_guard lg{m};
+        sv[i] = PieceStatus::REQUESTED;
     }
 };
 

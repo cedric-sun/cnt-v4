@@ -3,35 +3,24 @@
 #ifndef CNT5106_V4_PIECEBITFIELD_HPP
 #define CNT5106_V4_PIECEBITFIELD_HPP
 
-#include "PieceStatus.hpp"
+#include "AbstractPieceBitfield.hpp"
 #include "PieceBitfieldSnapshot.hpp"
 #include "../utils/class_utils.hpp"
 #include "../utils/err_utils.hpp"
-#include <vector>
 
-class SyncPieceBitfield;
-
-class PieceBitfield {
-protected:
+class PieceBitfield : public AbstractPieceBitfield {
+private:
     int n_owned;
-    std::vector<PieceStatus> sv;
 
-    explicit PieceBitfield(const int size, bool owningAllPiece)
-            : sv(size, owningAllPiece ? PieceStatus::OWNED : PieceStatus::ABSENT),
-              n_owned{owningAllPiece ? size : 0} {}
+    void lock() const override {}
 
-    void assertRange(const int i) {
-        if (i < 0 || i >= sv.size())
-            panic("setOwn index out of bound.");
-    }
+    void unlock() const override {}
 
-    void setOwnedUnsafe(const int i) {
-        sv[i] = PieceStatus::OWNED;
-        n_owned++;
-    }
+    bool try_lock() const override { return true; } // todo ensure `true` is ok for noop try_lock
 
 public:
-    explicit PieceBitfield(PieceBitfieldSnapshot &&pb_snap) : sv{std::move(pb_snap.sv)} {
+    explicit PieceBitfield(PieceBitfieldSnapshot &&pb_snap)
+            : AbstractPieceBitfield{std::move(pb_snap.sv)} {
         n_owned = 0;
         for (const auto &e : sv) {
             if (e == PieceStatus::OWNED)
@@ -43,21 +32,20 @@ public:
 
     virtual ~PieceBitfield() = default;
 
-    // thread safe for rhs
-    // returns a vector of sorted indexes the piece-bit at which is OWNED in lhs but ABSENT in rhs
-    std::vector<int> operator-(const SyncPieceBitfield &rhs) const;
 
-    virtual bool isOwned(const int i) {
-        assertRange(i);
+    bool isOwned(const int i) const override {
+        checkRange(i);
         return sv[i] == PieceStatus::OWNED;
     }
 
-    virtual void setOwned(const int i) {
-        assertRange(i);
-        setOwnedUnsafe(i);
+    void setOwned(const int i) override {
+        checkRange(i);
+        if (sv[i] != PieceStatus::OWNED)
+            n_owned++;
+        sv[i] = PieceStatus::OWNED;
     }
 
-    [[nodiscard]]  virtual bool owningAll() const {
+    bool owningAll() const override {
         return n_owned == sv.size();
     }
 };
