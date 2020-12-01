@@ -12,11 +12,10 @@
 class SyncPieceBitfield;
 
 class PieceBitfield {
-private:
-    std::vector<PieceStatus> sv;
-    int n_owned;
-
 protected:
+    int n_owned;
+    std::vector<PieceStatus> sv;
+
     explicit PieceBitfield(const int size, bool owningAllPiece)
             : sv(size, owningAllPiece ? PieceStatus::OWNED : PieceStatus::ABSENT),
               n_owned{owningAllPiece ? size : 0} {}
@@ -34,6 +33,7 @@ public:
 
     virtual ~PieceBitfield() = default;
 
+    // thread safe for rhs
     // returns a vector of sorted indexes the piece-bit at which is OWNED in lhs but ABSENT in rhs
     std::vector<int> operator-(const SyncPieceBitfield &rhs) const;
 

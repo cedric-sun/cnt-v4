@@ -19,6 +19,7 @@ public:
 
     virtual ~File() { std::fclose(f); }
 
+    // thread safe
     void readAt(int64_t pos, void *buf, int64_t length) {
         if (std::fseek(f, pos, SEEK_SET) != 0)
             panic("fseek failed");
@@ -26,6 +27,7 @@ public:
             panic("less-than-expected number of bytes is read by fread()");
     }
 
+    // thread safe
     virtual void writeAt(int64_t pos, const void *buf, int64_t length) = 0;
 
     [[nodiscard]] virtual int64_t size() const = 0;

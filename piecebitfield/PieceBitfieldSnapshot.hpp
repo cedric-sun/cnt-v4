@@ -14,6 +14,8 @@ private:
 public:
     explicit PieceBitfieldSnapshot(std::vector<PieceStatus> sv) : sv{std::move(sv)} {}
 
+    DFT_MOVE_CTOR_ONLY(PieceBitfieldSnapshot)
+
     [[nodiscard]] int byteCount() const {
         return sv.size();
     }

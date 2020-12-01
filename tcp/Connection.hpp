@@ -51,6 +51,7 @@ public:
         }
     }
 
+    // thread-safe
     [[nodiscard]] int64_t receivedByteCount() const {
         return static_cast<int64_t>(recv_bcnt);
     }

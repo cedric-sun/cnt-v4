@@ -37,10 +37,10 @@ private:
     std::function<void(void)> end_cb;
     Logger &logger;
 
+    std::optional<std::thread> prot_th{std::nullopt};
     EventQueue eq{};
 
     int peer_id;
-    std::optional<std::thread> prot_th{std::nullopt};
     std::optional<PieceBitfield> peer_own;
     std::optional<AsyncMsgScanner> amsc;
 
@@ -51,6 +51,9 @@ private:
 
     // whether peer is interested in self
     std::atomic<InterestStatus> peer_interest{InterestStatus::Unknown};
+
+    // whether self is interested in peer
+    InterestStatus self_interest{InterestStatus::Unknown};
 
     void setup();
 
@@ -65,7 +68,7 @@ public:
               logger{logger} {
     }
 
-    void start() {
+    void start() { // TODO: start after ctor is still not thread safe... issue memory barrier here
         prot_th.emplace(&Session::protocol, this);
     }
 

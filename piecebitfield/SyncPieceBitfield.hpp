@@ -8,34 +8,52 @@
 #include "PieceBitfieldSnapshot.hpp"
 
 class SyncPieceBitfield : public PieceBitfield {
+    friend std::vector<int> PieceBitfield::operator-(const SyncPieceBitfield &rhs) const;
 private:
     mutable std::mutex m;
 public:
     explicit SyncPieceBitfield(const int size, bool owningAllPiece)
             : PieceBitfield{size, owningAllPiece} {}
 
+    //thread safe
     PieceBitfieldSnapshot snapshot() const {
         const std::lock_guard lg{m};
         // potentially sending REQUEST as well, but it doesn't matter
         return PieceBitfieldSnapshot{sv}; // copy
     }
 
+    //thread safe
     void setOwned(const int i) override {
+        if (i < 0 || i >= sv.size())
+            panic("setOwn index out of bound.");
         const std::lock_guard lg{m};
-        PieceBitfield::setOwned(i);
+        if (sv[i] != PieceStatus::REQUESTED)
+            panic("setting a un-requested slot to OWNED");
+        sv[i] = PieceStatus::OWNED;
+        n_owned++;
     }
 
+    //thread safe
+    void setRequested(const int i) {
+        const std::lock_guard lg{m};
+        if (i < 0 || i >= sv.size())
+            panic("setRequested index out of bound.");
+        if (sv[i] != PieceStatus::ABSENT)
+            panic("setRequested on a non-ABSENT slot!");
+        sv[i] = PieceStatus::REQUESTED;
+    }
+
+    //thread safe
     bool owningAll() const override {
         const std::lock_guard lg{m};
         return PieceBitfield::owningAll();
     }
 
-
-    void lock() const { m.lock(); }
-
-    void unlock() const { m.unlock(); }
-
-    bool try_lock() const { return m.try_lock(); }
+    //thread safe
+    bool isOwned(const int i) const {
+        const std::lock_guard lg{m};
+        return sv[i] == PieceStatus::OWNED;
+    }
 };
 
 

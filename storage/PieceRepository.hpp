@@ -3,12 +3,13 @@
 #ifndef CNT5106_V4_PIECEREPOSITORY_HPP
 #define CNT5106_V4_PIECEREPOSITORY_HPP
 
-#include <memory>
 #include "Piece.hpp"
-#include "piecebitfield/SyncPieceBitfield.hpp"
+#include <memory>
 #include <unordered_map>
+#include <shared_mutex>
 
 class File;
+class SyncPieceBitfield;
 
 class PieceRepository {
 private:
@@ -18,6 +19,7 @@ private:
     const int64_t piece_size;
     SyncPieceBitfield &spbf;
     std::unordered_map<int, std::shared_ptr<Piece>> cache;
+    std::shared_mutex m_cache;
     int64_t n_cached_byte{0};
 
     void ensureSpace(int64_t size);

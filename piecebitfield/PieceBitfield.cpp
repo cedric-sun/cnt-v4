@@ -4,7 +4,7 @@
 #include "SyncPieceBitfield.hpp"
 
 std::vector<int> PieceBitfield::operator-(const SyncPieceBitfield &rhs) const {
-    std::lock_guard lg{rhs};
+    std::lock_guard lg{rhs.m};
     if (sv.size() != rhs.sv.size())
         panic("operands size is not identical");
     std::vector<int> ret;

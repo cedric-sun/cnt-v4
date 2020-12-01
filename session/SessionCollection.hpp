@@ -93,7 +93,7 @@ private:
     int self_peer_id;
     SyncPieceBitfield &self_own;
     PieceRepository &repo;
-    Logger &logger
+    Logger &logger;
 
 
     void pnAlgorithm(int a);
