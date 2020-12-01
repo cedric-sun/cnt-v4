@@ -9,6 +9,7 @@
 
 class SyncPieceBitfield : public PieceBitfield {
     friend std::vector<int> PieceBitfield::operator-(const SyncPieceBitfield &rhs) const;
+
 private:
     mutable std::mutex m;
 public:
@@ -18,8 +19,12 @@ public:
     //thread safe
     PieceBitfieldSnapshot snapshot() const {
         const std::lock_guard lg{m};
-        // potentially sending REQUEST as well, but it doesn't matter
-        return PieceBitfieldSnapshot{sv}; // copy
+        // actually sending PieceStatus::Request doesn't matter; for sanity we filter it for now.
+        std::vector<PieceStatus> tmp(sv.size());
+        std::transform(sv.cbegin(), sv.cend(), tmp.begin(), [](const auto &e) {
+            return e == PieceStatus::REQUESTED ? PieceStatus::ABSENT : e;
+        });
+        return PieceBitfieldSnapshot{std::move(tmp)};
     }
 
     //thread safe

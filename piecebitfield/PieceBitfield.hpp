@@ -20,6 +20,16 @@ protected:
             : sv(size, owningAllPiece ? PieceStatus::OWNED : PieceStatus::ABSENT),
               n_owned{owningAllPiece ? size : 0} {}
 
+    void assertRange(const int i) {
+        if (i < 0 || i >= sv.size())
+            panic("setOwn index out of bound.");
+    }
+
+    void setOwnedUnsafe(const int i) {
+        sv[i] = PieceStatus::OWNED;
+        n_owned++;
+    }
+
 public:
     explicit PieceBitfield(PieceBitfieldSnapshot &&pb_snap) : sv{std::move(pb_snap.sv)} {
         n_owned = 0;
@@ -37,20 +47,18 @@ public:
     // returns a vector of sorted indexes the piece-bit at which is OWNED in lhs but ABSENT in rhs
     std::vector<int> operator-(const SyncPieceBitfield &rhs) const;
 
+    virtual bool isOwned(const int i) {
+        assertRange(i);
+        return sv[i] == PieceStatus::OWNED;
+    }
+
     virtual void setOwned(const int i) {
-        if (i < 0 || i >= sv.size())
-            panic("setOwn index out of bound.");
-        if (sv[i] == PieceStatus::OWNED)
-            panic("piece already owned!");
-        sv[i] = PieceStatus::OWNED;
-        n_owned++;
+        assertRange(i);
+        setOwnedUnsafe(i);
     }
 
     [[nodiscard]]  virtual bool owningAll() const {
         return n_owned == sv.size();
-        // TODO: improve concurrent performance
-        //      In the thread-safe derived class, we acquires its lock purely for testing this
-        //      condition here;
     }
 };
 
