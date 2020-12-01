@@ -1,9 +1,8 @@
 // cesun, 11/23/20 5:42 PM.
 
 #include "PieceRepository.hpp"
-#include "../piecebitfield/SyncPieceBitfield.hpp"
-#include <mutex>
 #include "File.hpp"
+#include <mutex>
 
 // precondition: m_cache exclusively acquired
 void PieceRepository::ensureSpace(const int64_t size) {
@@ -14,9 +13,8 @@ void PieceRepository::ensureSpace(const int64_t size) {
     }
 }
 
+// precond: piece i is OWNED
 std::shared_ptr<Piece> PieceRepository::get(const int i) {
-    if (!spbf.isOwned(i))
-        panic("receive a request for a piece that self does not own");
     {
         const std::shared_lock reader_lock(m_cache);
         if (auto it = cache.find(i); it != cache.cend()) {
@@ -36,19 +34,15 @@ std::shared_ptr<Piece> PieceRepository::get(const int i) {
     return piece_sp; // implicitly moved
 }
 
-//TODO
-//      session depends on both SyncPieceBitfield and PieceRepository, where shall
-//          we do the error handling. (don't do it twice!)
-//          SyncPieceBitfield is assuming too much responsibility for error checking now.
+// precond: piece i is REQUESTED
 void PieceRepository::save(int i, std::shared_ptr<Piece> piece_up) {
-    spbf.setOwned(i);
     auto begin = i * piece_size;
     auto expected_size = std::min(piece_size, f->size() - begin);
     if (piece_up->size() != expected_size)
         panic("unexpected piece size");
     f->writeAt(begin, piece_up->data(), piece_up->size());
     {
-        const std::lock_guard lg(spbf);
+        const std::lock_guard writer_lock{m_cache};
         ensureSpace(piece_up->size());
         cache.emplace(i, std::shared_ptr<Piece>{std::move(piece_up)});
     }

@@ -5,10 +5,11 @@
 
 #include "../io/BufferedWriter.hpp"
 #include "../io/BufferedReader.hpp"
-#include "PieceStatus.hpp"
+#include "PieceBitfield.hpp"
 
 class PieceBitfieldSnapshot {
-    friend class PieceBitfield;
+    friend PieceBitfield::PieceBitfield(PieceBitfieldSnapshot &&);
+
 private:
     std::vector<PieceStatus> sv;
 public:
@@ -25,7 +26,7 @@ public:
     }
 
     static PieceBitfieldSnapshot readFrom(BufferedReader &r, const int size) {
-        std::vector <PieceStatus> tmp(size);
+        std::vector<PieceStatus> tmp(size);
         r.read(tmp.data(), size);
         return PieceBitfieldSnapshot{std::move(tmp)};
     }
