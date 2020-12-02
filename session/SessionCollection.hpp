@@ -113,7 +113,8 @@ public:
 
     void newSession(Connection &&conn, const int expected_peer_id) {
         std::lock_guard lg{m};
-        ss.emplace_back(self_peer_id, expected_peer_id, std::move(conn),repo,self_own,,logger);
+        ss.emplace_back(self_peer_id, expected_peer_id, std::move(conn),repo,self_own,
+                        [](){},*this,logger);
     }
 
     void wait();

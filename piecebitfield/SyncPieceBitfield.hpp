@@ -8,6 +8,7 @@
 #include <mutex>
 #include <atomic>
 
+// TODO: refactor & optimize to be lock-free!
 class SyncPieceBitfield : public AbstractPieceBitfield {
 private:
     std::atomic_int n_owned;
@@ -62,6 +63,12 @@ public:
         checkRange(i);
         const std::lock_guard lg{m};
         sv[i] = PieceStatus::REQUESTED;
+    }
+
+    bool isRequested(const int i) {
+        checkRange(i);
+        const std::lock_guard lg{m};
+        return sv[i] == PieceStatus::REQUESTED;
     }
 };
 

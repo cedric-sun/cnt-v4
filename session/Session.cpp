@@ -8,14 +8,14 @@
 #include "event/NonZeroMsgEvent.hpp"
 #include "../utils/MathUtils.hpp"
 #include "../storage/PieceRepository.hpp"
+#include "SessionCollection.hpp"
 
 void Session::setup() {
     HandshakeMsg{self_peer_id}.writeTo(bw);
     std::optional<PieceBitfieldSnapshot> snap;
     {
-        // atomically snapshot the bitfield of self,
-        // and enable queue to receive broadcast HAVE
-        // TODO: ensure have broadcast is also sent in critical section
+        // TODO atomically take snapshot and enable the queue for receiving broadcast HAVE
+        const std::lock_guard lg{m_bcast};
         snap.emplace(self_own.snapshot());
         eq.enable();
     }
@@ -26,8 +26,37 @@ void Session::setup() {
         panic("Received handshake from an unexpected peer.");
     auto bf_msg = BitfieldMsg::readFrom(br);
     peer_own.emplace(bf_msg->extract());
+    if ((*peer_own - self_own).empty()) {
+        NotInterestedMsg{}.writeTo(bw);
+    } else {
+        InterestedMsg{}.writeTo(bw);
+    }
+    bw.flush();
     amsc.emplace(br, eq);
     amsc->start();
+}
+
+// precondition: self_choke == ChokeStatus::Unchoked
+void Session::requestNextIfPossible() {
+    if (self_interest == InterestStatus::Interested) {
+        auto eligible_indexes = *peer_own - self_own;
+        if (eligible_indexes.empty())
+            panic("contradictory self_interest and bitfield difference");
+        const int i = eligible_indexes[MathUtils::randomInt(eligible_indexes.size())];
+        // TODO: what if this thread lost CPU here and another thread also pick the same
+        //      i? Acquiring all eligible indexes + randomly select i + setRequest(i)
+        //      needs to be atomic as a whole!
+        self_own.setRequested(i);
+        RequestMsg{i}.writeTo(bw);
+        bw.flush();
+    } else {
+        // peer unchoked self because it thinks that self is interested in it,
+        // but now we found self is actually not interested in peer.
+        // One possible thing is that self lost interest in peer in a broadcast have
+        // event, but peer made the decision of unchoking self before it can update its
+        // state of whether self is interested in it.
+        // We just ignore such unchoke for now.
+    }
 }
 
 void Session::protocol() {
@@ -62,26 +91,7 @@ void Session::protocol() {
                 break;
             case EventType::MsgUnchoke:
                 self_choke = ChokeStatus::Unchoked;
-                if (self_interest == InterestStatus::Interested) {
-                    int i;
-                    {
-                        const std::lock_guard lg{self_own};
-                        auto eligible_indexes = *peer_own - self_own;
-                        if (eligible_indexes.empty())
-                            panic("contradictory self_interest and bitfield diff");
-                        i = eligible_indexes[MathUtils::randomInt(eligible_indexes.size())];
-                        self_own[i] = PieceStatus::REQUESTED;
-                    }
-                    RequestMsg{i}.writeTo(bw);
-                    bw.flush();
-                } else {
-                    // peer unchoked self because it thinks that self is interested in it,
-                    // but now we found self is actually not interested in peer.
-                    // One possible thing is that self lost interest in peer in a broadcast have
-                    // event, but peer made the decision on unchoke self before it can update its
-                    // state of whether self is interested in it.
-                    // We just ignore such unchoke for now.
-                }
+                requestNextIfPossible();
                 break;
             case EventType::MsgInterest:
                 peer_interest = InterestStatus::Interested;
@@ -91,11 +101,13 @@ void Session::protocol() {
                 peer_interest = InterestStatus::NotInterested;
                 if (peer_choke == ChokeStatus::Unchoked) {
                     // TODO: peer lost interest in self while it's unchoked;
-                    //      choke it immediately and try accomodate other session
+                    //      choke it immediately and try accommodate other session
                 }
                 break;
             case EventType::MsgHave: {
                 auto have_msg = static_cast<HaveMsgEvent *>(e.get())->extract();
+                if (peer_own->isOwned(i))
+                    panic("peer send HAVE for an piece index that self think peer already owned");
                 peer_own->setOwned(have_msg.piece_id);
                 if (self_own.owningAll() && peer_own->owningAll()) {
                     isDone = true;
@@ -110,19 +122,27 @@ void Session::protocol() {
                 break;
             case EventType::MsgRequest: {
                 auto req_msg = static_cast<RequestMsgEvent *>(e.get())->extract();
+                if (!self_own.isOwned(req_msg.piece_id))
+                    panic("peer is requesting a piece self doesn't own");
                 PieceMsg{req_msg.piece_id, repo.get(req_msg.piece_id)}.writeTo(bw);
                 bw.flush();
             }
                 break;
             case EventType::MsgPiece:
                 auto piece_msg = static_cast<PieceMsgEvent *>(e.get())->extract();
-                repo.save(piece_msg.piece_id, piece_msg.getPiece());
+                if (!self_own.isRequested(piece_msg.piece_id))
+                    panic("received a piece that self didn't request");
+                repo.save(piece_msg.piece_id, piece_msg.getPiece()); // moved
+                {
+                    self_own.setOwned(piece_msg.piece_id);
+                    sc.broadcastHave(piece_msg.piece_id);
+                }
                 if (self_own.owningAll() && peer_own->owningAll()) {
                     isDone = true;
                     break;
                 }
-                if (self_choke == ChokeStatus::Unchoked) { // continue to request next...
-
+                if (self_choke == ChokeStatus::Unchoked) {
+                    requestNextIfPossible();
                 }
                 break;
         }
