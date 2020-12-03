@@ -3,6 +3,7 @@
 #include "Config.hpp"
 #include <fstream>
 #include "utils/err_utils.hpp"
+#include <unordered_set>
 
 Config::Config(int self_peer_id)
         : self_peer_id{self_peer_id},
@@ -34,12 +35,21 @@ Config::Config(int self_peer_id)
     std::ifstream peerinfo_ifs{"PeerInfo.cfg"};
     int peer_id, port, has_file;
     std::string fqdn;
+    bool self_found = false;
+    std::unordered_set<decltype(peer_id)> idset;
     while (peerinfo_ifs >> peer_id >> fqdn >> port >> has_file) {
-        if (peer_id == self_peer_id) {
+        if (auto it = idset.find(peer_id);it != idset.cend()) {
+            panic("duplicated peer id appeared in PeerInfo.cfg");
+        }
+        idset.insert(peer_id);
+        //TODO ensure the same (hostname, port) pair does not appear multiple time
+        if (!self_found && peer_id == self_peer_id) {
             this->has_file = has_file;
             this->self_port = port;
-            break;
+            self_found = true;
         }
-        prior_peers.emplace_back(peer_id, port, fqdn);
+        if (!self_found)
+            prior_peers.emplace_back(peer_id, port, fqdn);
     }
+    n_total_peer = idset.size();
 }

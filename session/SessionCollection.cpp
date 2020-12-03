@@ -25,11 +25,11 @@ static void setInterval(CallBackFunc cb, const int sec) {
 }
 
 
-SessionCollection::SessionCollection(int pn_interval, int opt_interval, int n_pn, int self_peer_id,
-                                     SyncPieceBitfield &self_own, PieceRepository &repo,
-                                     Logger &logger)
-        : n_pn{n_pn}, self_peer_id{self_peer_id}, self_own{self_own}, repo{repo},
-          logger{logger} {
+SessionCollection::SessionCollection(int n_exp_session, int pn_interval, int opt_interval, int n_pn,
+                                     int self_peer_id, SyncPieceBitfield &self_own,
+                                     PieceRepository &repo, Logger &logger)
+        : n_exp_session{n_exp_session}, n_pn{n_pn}, self_peer_id{self_peer_id}, self_own{self_own},
+          repo{repo}, logger{logger} {
     setInterval([this] { pnAlgorithm(); }, pn_interval);
     setInterval([this] { optAlgorithm(); }, opt_interval);
     // TODO: issue mem fence
@@ -166,7 +166,7 @@ void SessionCollection::cleanUp() {
     ss.erase(std::remove_if(ss.begin(), ss.end(), [](const auto &e) {
         return e->s.isDone();
     }), ss.end());
-    if (ss.empty()) {
+    if (ss.empty() && n_exp_session == 0) {
         cond_end.notify_all();
     }
 }

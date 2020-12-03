@@ -25,6 +25,7 @@ private:
     bool has_file;
     std::string file_path;
     std::vector<PeerInfo> prior_peers;
+    int n_total_peer{0};
 
 public:
     explicit Config(int self_peer_id);
@@ -73,6 +74,10 @@ public:
 
     [[nodiscard]]  const std::vector<PeerInfo> &getPriorPeers() const {
         return prior_peers;
+    }
+
+    [[nodiscard]] int totalPeerCount() const {
+        return n_total_peer;
     }
 };
 

@@ -105,6 +105,7 @@ private:
     std::optional<std::reference_wrapper<Sn>> opt{std::nullopt};
     std::mutex m;
 
+    int n_exp_session;
     const int n_pn;
     int self_peer_id;
     SyncPieceBitfield &self_own;
@@ -123,7 +124,8 @@ private:
     void cleanUp();
 
 public:
-    explicit SessionCollection(int pn_interval, int opt_interval, int n_pn, int self_peer_id,
+    explicit SessionCollection(int n_exp_session, int pn_interval, int opt_interval, int n_pn,
+                               int self_peer_id,
                                SyncPieceBitfield &self_own, PieceRepository &repo, Logger &logger);
 
     void broadcastHave(const int i) {
@@ -144,6 +146,7 @@ public:
                                           *this, logger);
         ss.push_back(std::move(sn_up));
         ss.back()->s.start();
+        n_exp_session--;
     }
 
     void wait();

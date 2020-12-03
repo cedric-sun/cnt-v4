@@ -15,6 +15,10 @@ public:
     static int randomInt(const int upper) {
         return uniform(rng) % upper;
     }
+
+    static int ceilingDiv(const int64_t x, const int64_t y) {
+        return static_cast<int>((x + y - 1) / y);
+    }
 };
 
 

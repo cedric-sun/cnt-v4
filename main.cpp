@@ -7,6 +7,8 @@
 #include "tcp/Acceptor.hpp"
 #include "Config.hpp"
 #include "Logger.hpp"
+#include "piecebitfield/SyncPieceBitfield.hpp"
+#include "utils/MathUtils.hpp"
 
 [[noreturn]] static void printUsageAndExit(char *argv0) {
     fprintf(stderr, "Usage: %s <peerID>\n", argv0);
@@ -55,19 +57,19 @@ int main(int argc, char **argv) {
     const int self_peer_id = parseArgs(argc, argv);
     Config config{self_peer_id};
     validateConfig(config);
+    Logger logger{self_peer_id, config.getLogFilepath()};
     std::unique_ptr<File> file_up{nullptr};
-    std::optional<SyncPieceBitfield> sopt{std::nullopt};
-    // chaotic evil: bypass the scope rule
-    // SyncPieceBitfield foo = config.hasFile()?SyncPieceBitfield{}:SyncPieceBitfield{};
     if (config.hasFile()) {
         file_up = std::make_unique<ExistingFile>(config.getFilePath());
-        sopt.emplace();
     } else {
         file_up = std::make_unique<NewFile>(config.getFilePath(), config.getFileSize());
-        sopt.emplace();
     }
-    PieceRepository repo{std::move(file_up)};
-    SessionCollection sc{};
+    SyncPieceBitfield spbf{MathUtils::ceilingDiv(config.getFileSize(), config.getPieceSize()),
+                           config.hasFile()};
+    PieceRepository repo{std::move(file_up), config.getPieceSize()};
+    SessionCollection sc{config.totalPeerCount() - 1, config.getUnchokingInterval(),
+                         config.getOptUnchokingInterval(), config.getNumPreferredNeighbors(),
+                         self_peer_id, spbf, repo, logger};
     startServer(config.getPort(), sc);
     for (const auto &pi : config.getPriorPeers()) {
         sc.newSession(Connection{pi.fqdn, pi.port}, pi.peer_id);
