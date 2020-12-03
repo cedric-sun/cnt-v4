@@ -28,13 +28,13 @@ static void setInterval(CallBackFunc cb, const int sec) {
 SessionCollection::SessionCollection(int pn_interval, int opt_interval, int n_pn, int self_peer_id,
                                      SyncPieceBitfield &self_own, PieceRepository &repo,
                                      Logger &logger)
-        : self_peer_id{self_peer_id}, self_own{self_own}, repo{repo},
+        : n_pn{n_pn}, self_peer_id{self_peer_id}, self_own{self_own}, repo{repo},
           logger{logger} {
-    setInterval([n_pn, this] { pnAlgorithm(n_pn); }, pn_interval);
+    setInterval([this] { pnAlgorithm(); }, pn_interval);
     setInterval([this] { optAlgorithm(); }, opt_interval);
 }
 
-void SessionCollection::pnAlgorithm(const int n_pn) {
+void SessionCollection::pnAlgorithm() {
     const std::lock_guard lg{m};
     for (auto &e : ss) {
         e->updateByteCount();
@@ -103,4 +103,48 @@ void SessionCollection::optAlgorithm() {
     }
     // if promotion does happen, nothing need to be done.
     opt = lucky_rw;
+}
+
+void SessionCollection::tryPreempt(const Session *const s_ref) {
+    const std::lock_guard lg{m};
+    std::optional<std::reference_wrapper<Sn>> wrapper_sn;
+    for (const auto &sn_up : ss) {
+        if (&sn_up->s == s_ref) {
+            wrapper_sn.emplace(*sn_up);
+            break;
+        }
+    }
+    if (!wrapper_sn.has_value())
+        panic("tryPreempt() on an unknown session address");
+    if (pn_set->size() < n_pn) {
+        pn_set->add(wrapper_sn);
+        wrapper_sn->get().s.unchoke();
+        return;
+    }
+    if (!opt.has_value()) {
+        opt.emplace(wrapper_sn);
+        wrapper_sn->get().s.unchoke();
+    }
+}
+
+void SessionCollection::relinquish(const Session *s_ref) {
+    const std::lock_guard lg{m};
+    std::optional<std::reference_wrapper<Sn>> wrapper_sn;
+    for (const auto &sn_up : ss) {
+        if (&sn_up->s == s_ref) {
+            wrapper_sn.emplace(*sn_up);
+            break;
+        }
+    }
+    if (!wrapper_sn.has_value())
+        panic("relinquish() on an unknown session address");
+    if (pn_set->contains(wrapper_sn)) {
+        wrapper_sn->get().s.choke();
+        pn_set->remove(wrapper_sn);
+        return;
+    }
+    if (opt.has_value() && std::addressof(opt->get()) == std::addressof(wrapper_sn->get())) {
+        wrapper_sn->get().s.choke();
+        opt.reset();
+    }
 }

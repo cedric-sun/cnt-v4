@@ -98,13 +98,14 @@ void Session::protocol() {
                 break;
             case EventType::MsgInterest:
                 peer_interest = InterestStatus::Interested;
-                // TODO: try accomodate peer immediately
+                sc.tryPreempt(this); //TODO
                 break;
             case EventType::MsgNotInterest:
                 peer_interest = InterestStatus::NotInterested;
                 if (peer_choke == ChokeStatus::Unchoked) {
-                    // TODO: peer lost interest in self while it's unchoked;
-                    //      choke it immediately and try accommodate other session
+                    // peer lost interest in self while it's unchoked;
+                    // choke it immediately and try accommodate other session
+                    sc.relinquish(this);
                 }
                 break;
             case EventType::MsgHave: {

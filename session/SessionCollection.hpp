@@ -56,6 +56,21 @@ private:
 
         SnRefSet &operator=(SnRefSet &&) = default;
 
+        [[nodiscard]] int size() const {
+            return pns.size();
+        }
+
+        bool contains(std::reference_wrapper<Sn> sn) {
+            auto it = std::lower_bound(pns.cbegin(), pns.cend(), sn, addr_comp);
+            return std::addressof(it->get()) == std::addressof(sn.get());
+        }
+
+        // precondition: contains(sn) == true
+        void remove(std::reference_wrapper<Sn> sn) {
+            auto it = std::lower_bound(pns.cbegin(), pns.cend(), sn, addr_comp);
+            pns.erase(it);
+        }
+
         void add(std::reference_wrapper<Sn> rw) {
             auto it = std::lower_bound(pns.cbegin(), pns.cend(), rw, addr_comp);
             pns.insert(it, rw);
@@ -69,6 +84,8 @@ private:
                                 std::back_inserter(ret.pns), addr_comp);
             return ret;
         }
+
+
 
         void chokeAll() {
             for (Sn &lang_ref : pns) {
@@ -90,13 +107,14 @@ private:
     std::optional<std::reference_wrapper<Sn>> opt{std::nullopt};
     std::mutex m;
 
+    const int n_pn;
     int self_peer_id;
     SyncPieceBitfield &self_own;
     PieceRepository &repo;
     Logger &logger;
 
 
-    void pnAlgorithm(int a);
+    void pnAlgorithm();
 
     void optAlgorithm();
 
@@ -110,6 +128,11 @@ public:
             e->s.ackHave(i);
         }
     }
+
+    void tryPreempt(const Session *);
+
+    void relinquish(const Session *);
+
 
     void newSession(Connection &&conn, const int expected_peer_id) {
         std::lock_guard lg{m};
