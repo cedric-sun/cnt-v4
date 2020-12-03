@@ -25,6 +25,10 @@ void Session::setup() {
         panic("Received handshake from an unexpected peer.");
     auto bf_msg = BitfieldMsg::readFrom(br);
     peer_own.emplace(bf_msg->extract());
+    if (peer_own->owningAll() && self_own.owningAll()) {
+        is_done = true;
+        return;
+    }
     if ((*peer_own - self_own).empty()) {
         NotInterestedMsg{}.writeTo(bw);
     } else {
@@ -65,8 +69,7 @@ void Session::requestNextIfPossible() {
 
 void Session::protocol() {
     setup();
-    bool isDone = false;
-    while (!isDone) {
+    while (!is_done) {
         switch (auto e = eq.deq();e->event_type) {
             case EventType::TimerChoke:
                 if (peer_choke != ChokeStatus::Choked) {
@@ -98,7 +101,7 @@ void Session::protocol() {
                 break;
             case EventType::MsgInterest:
                 peer_interest = InterestStatus::Interested;
-                sc.tryPreempt(this); //TODO
+                sc.tryPreempt(this);
                 break;
             case EventType::MsgNotInterest:
                 peer_interest = InterestStatus::NotInterested;
@@ -114,7 +117,7 @@ void Session::protocol() {
                     panic("peer send HAVE for an piece index that self think peer already owned");
                 peer_own->setOwned(have_msg.piece_id);
                 if (self_own.owningAll() && peer_own->owningAll()) {
-                    isDone = true;
+                    is_done = true;
                     break;
                 }
                 if (!(*peer_own - self_own).empty()) {
@@ -139,7 +142,7 @@ void Session::protocol() {
                 self_own.setOwned(piece_msg.piece_id);
                 sc.broadcastHave(piece_msg.piece_id);
                 if (self_own.owningAll() && peer_own->owningAll()) {
-                    isDone = true;
+                    is_done = true;
                     break;
                 }
                 if (self_choke == ChokeStatus::Unchoked) {
@@ -148,7 +151,9 @@ void Session::protocol() {
                 break;
         }
     }
+    sc.relinquish(this);
     conn_up->close();
-    amsc->stop();
+    if (amsc.has_value())
+        amsc->stop();
     end_cb();
 }

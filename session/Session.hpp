@@ -40,12 +40,13 @@ private:
     SessionCollection &sc;
     Logger &logger;
 
-    std::optional<std::thread> prot_th{std::nullopt};
+    std::optional<std::jthread> prot_th{std::nullopt};
 
     EventQueue eq{};
     std::mutex m_bcast;
     std::atomic_bool is_active{false};
     std::atomic_bool is_bcast_ready{false};
+    std::atomic_bool is_done{false};
 
     int peer_id;
     std::optional<PieceBitfield> peer_own;
@@ -134,6 +135,10 @@ public:
     void unchoke() {
         if (is_active)
             eq.enq(std::make_unique<Event>(EventType::TimerUnchoke));
+    }
+
+    [[nodiscard]] bool isDone() const {
+        return is_done;
     }
 
     [[nodiscard]] bool isActive() const {

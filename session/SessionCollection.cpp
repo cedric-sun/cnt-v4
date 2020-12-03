@@ -32,6 +32,8 @@ SessionCollection::SessionCollection(int pn_interval, int opt_interval, int n_pn
           logger{logger} {
     setInterval([this] { pnAlgorithm(); }, pn_interval);
     setInterval([this] { optAlgorithm(); }, opt_interval);
+    // TODO: issue mem fence
+    gc_thread.emplace(&SessionCollection::cleanUp, this);
 }
 
 void SessionCollection::pnAlgorithm() {
@@ -141,10 +143,36 @@ void SessionCollection::relinquish(const Session *s_ref) {
     if (pn_set->contains(wrapper_sn)) {
         wrapper_sn->get().s.choke();
         pn_set->remove(wrapper_sn);
-        return;
-    }
-    if (opt.has_value() && std::addressof(opt->get()) == std::addressof(wrapper_sn->get())) {
+    } else if (opt.has_value()
+               && std::addressof(opt->get()) == std::addressof(wrapper_sn->get())) {
         wrapper_sn->get().s.choke();
         opt.reset();
+    } else {
+        return;
     }
+    // an PN/OPT successfully relinquished itself; choose arbitrary choked interesting session
+    for (const auto &e : ss) {
+        if (e->s.isActive() && e->s.getPeerChoke() == ChokeStatus::Choked
+            && e->s.getPeerInterest() == InterestStatus::Interested) {
+            e->s.unchoke();
+            break;
+        }
+    }
+}
+
+void SessionCollection::cleanUp() {
+    std::unique_lock ul{m};
+    cond_gc.wait(ul);
+    ss.erase(std::remove_if(ss.begin(), ss.end(), [](const auto &e) {
+        return e->s.isDone();
+    }), ss.end());
+    if (ss.empty()) {
+        cond_end.notify_all();
+    }
+}
+
+void SessionCollection::wait() {
+    static std::mutex m_end;
+    std::unique_lock ul{m_end};
+    cond_end.wait(ul);
 }

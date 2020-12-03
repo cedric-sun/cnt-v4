@@ -60,20 +60,20 @@ private:
             return pns.size();
         }
 
-        bool contains(std::reference_wrapper<Sn> sn) {
-            auto it = std::lower_bound(pns.cbegin(), pns.cend(), sn, addr_comp);
-            return std::addressof(it->get()) == std::addressof(sn.get());
+        bool contains(std::reference_wrapper<Sn> sn_ref) {
+            auto it = std::lower_bound(pns.cbegin(), pns.cend(), sn_ref, addr_comp);
+            return std::addressof(it->get()) == std::addressof(sn_ref.get());
         }
 
         // precondition: contains(sn) == true
-        void remove(std::reference_wrapper<Sn> sn) {
-            auto it = std::lower_bound(pns.cbegin(), pns.cend(), sn, addr_comp);
+        void remove(std::reference_wrapper<Sn> sn_ref) {
+            auto it = std::lower_bound(pns.cbegin(), pns.cend(), sn_ref, addr_comp);
             pns.erase(it);
         }
 
-        void add(std::reference_wrapper<Sn> rw) {
-            auto it = std::lower_bound(pns.cbegin(), pns.cend(), rw, addr_comp);
-            pns.insert(it, rw);
+        void add(std::reference_wrapper<Sn> sn_ref) {
+            auto it = std::lower_bound(pns.cbegin(), pns.cend(), sn_ref, addr_comp);
+            pns.insert(it, sn_ref);
         }
 
         // set difference
@@ -84,8 +84,6 @@ private:
                                 std::back_inserter(ret.pns), addr_comp);
             return ret;
         }
-
-
 
         void chokeAll() {
             for (Sn &lang_ref : pns) {
@@ -113,10 +111,16 @@ private:
     PieceRepository &repo;
     Logger &logger;
 
+    std::optional<std::thread> gc_thread;
+    std::condition_variable cond_gc;
+    std::condition_variable cond_end;
+
 
     void pnAlgorithm();
 
     void optAlgorithm();
+
+    void cleanUp();
 
 public:
     explicit SessionCollection(int pn_interval, int opt_interval, int n_pn, int self_peer_id,
@@ -133,11 +137,12 @@ public:
 
     void relinquish(const Session *);
 
-
     void newSession(Connection &&conn, const int expected_peer_id) {
         std::lock_guard lg{m};
-        ss.emplace_back(self_peer_id, expected_peer_id, std::move(conn), repo, self_own,
-                        []() {/*TODO*/}, *this, logger);
+        auto sn_up = std::make_unique<Sn>(self_peer_id, expected_peer_id, std::move(conn), repo,
+                                          self_own, [&]() { cond_gc.notify_all(); },
+                                          *this, logger);
+        ss.push_back(std::move(sn_up));
         ss.back()->s.start();
     }
 
