@@ -10,6 +10,8 @@ private:
     static std::default_random_engine rng;
     static std::uniform_int_distribution<> uniform;
 public:
+    // return a uniform random integer in [0,upper)
+    // precondition: upper >= 1
     static int randomInt(const int upper) {
         return uniform(rng) % upper;
     }

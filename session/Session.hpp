@@ -41,14 +41,18 @@ private:
     Logger &logger;
 
     std::optional<std::thread> prot_th{std::nullopt};
+
     EventQueue eq{};
     std::mutex m_bcast;
+    std::atomic_bool is_active{false};
+    std::atomic_bool is_bcast_ready{false};
 
     int peer_id;
     std::optional<PieceBitfield> peer_own;
     std::optional<AsyncMsgScanner> amsc;
 
-    ChokeStatus self_choke{ChokeStatus::Unknown}; // whether self is choked by peer
+    // whether self is choked by peer
+    ChokeStatus self_choke{ChokeStatus::Unknown};
 
     // whether peer is choked by self
     std::atomic<ChokeStatus> peer_choke{ChokeStatus::Unknown};
@@ -57,7 +61,18 @@ private:
     std::atomic<InterestStatus> peer_interest{InterestStatus::Unknown};
 
     // whether self is interested in peer
-    InterestStatus self_interest{InterestStatus::Unknown};
+    //InterestStatus self_interest{InterestStatus::Unknown};
+    // the problem with this data member is that, essentially it serves as a cached result
+    // of whether (*peer_own - self_own) is empty; But since self_own always changes out of
+    // the control of a single protocol thread, there is no way for such cache to be accurate.
+    // Its being Interested can be false positive (i.e. even we tested that (self_interest ==
+    // InterestStatus::Interested) holds, an immediate (*peer_own - self_own) can still produce an
+    // empty index vector).
+    // Its being NotInterested is always honest. This is because since such
+    // `self_interest = NotInterested` is set previously in some event handler in the same thread,
+    // the only thing that can happened to `self_own` is that an ABSENT piece slot become REQUESTED
+    // or OWNED; And none of these two type of changes could affect the result of
+    // (*peer_own - self_own).
 
     void setup();
 
@@ -102,19 +117,27 @@ public:
     //        After the snapshot is taken, we don't wanna miss any bcast
     //
     void ackHave(const int i) {
-        // see either
-        //      snapshot is taken and queue is enabled, or
-        //      snapshot is not taken and queue is disabled
-        const std::lock_guard lg{m_bcast};
-        eq.enq(std::make_unique<BcastHaveEvent>(i));
+        if (is_bcast_ready) {
+            eq.enq(std::make_unique<BcastHaveEvent>(i));
+        } else {
+            const std::lock_guard lg{m_bcast};
+            if (is_bcast_ready)
+                eq.enq(std::make_unique<BcastHaveEvent>(i));
+        }
     }
 
     void choke() {
-        eq.enq(std::make_unique<Event>(EventType::TimerChoke));
+        if (is_active)
+            eq.enq(std::make_unique<Event>(EventType::TimerChoke));
     }
 
     void unchoke() {
-        eq.enq(std::make_unique<Event>(EventType::TimerUnchoke));
+        if (is_active)
+            eq.enq(std::make_unique<Event>(EventType::TimerUnchoke));
+    }
+
+    [[nodiscard]] bool isActive() const {
+        return is_active;
     }
 
     // thread-safe

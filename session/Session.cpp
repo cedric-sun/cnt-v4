@@ -14,10 +14,9 @@ void Session::setup() {
     HandshakeMsg{self_peer_id}.writeTo(bw);
     std::optional<PieceBitfieldSnapshot> snap;
     {
-        // TODO atomically take snapshot and enable the queue for receiving broadcast HAVE
         const std::lock_guard lg{m_bcast};
         snap.emplace(self_own.snapshot());
-        eq.enable();
+        is_bcast_ready = true;
     }
     spbf->writeTo(bw);
     bw.flush();
@@ -34,28 +33,33 @@ void Session::setup() {
     bw.flush();
     amsc.emplace(br, eq);
     amsc->start();
+    is_active = true;
 }
 
 // precondition: self_choke == ChokeStatus::Unchoked
 void Session::requestNextIfPossible() {
-    if (self_interest == InterestStatus::Interested) {
+    //Acquiring all eligible indexes + randomly select i + setRequest(i) needs to be atomic
+    // as a whole
+    static std::mutex m_req; // shared across ALL sessions
+    int i = -1;
+    {
+        const std::lock_guard lg{m_req};
         auto eligible_indexes = *peer_own - self_own;
-        if (eligible_indexes.empty())
-            panic("contradictory self_interest and bitfield difference");
-        const int i = eligible_indexes[MathUtils::randomInt(eligible_indexes.size())];
-        // TODO: what if this thread lost CPU here and another thread also pick the same
-        //      i? Acquiring all eligible indexes + randomly select i + setRequest(i)
-        //      needs to be atomic as a whole!
-        self_own.setRequested(i);
+        if (!eligible_indexes.empty()) {
+            i = eligible_indexes[MathUtils::randomInt(eligible_indexes.size())];
+            self_own.setRequested(i);
+        } else {
+            // peer unchoked self because it thinks that self is interested in it,
+            // but now we found self is actually not interested in peer.
+            // One possible thing is that self lost interest in peer in a broadcast have
+            // event, but peer made the decision of unchoking self before it can update its
+            // state of whether self is interested in it.
+            // We just ignore such unchoke for now.
+        }
+    }
+    if (i != -1) {
         RequestMsg{i}.writeTo(bw);
         bw.flush();
-    } else {
-        // peer unchoked self because it thinks that self is interested in it,
-        // but now we found self is actually not interested in peer.
-        // One possible thing is that self lost interest in peer in a broadcast have
-        // event, but peer made the decision of unchoking self before it can update its
-        // state of whether self is interested in it.
-        // We just ignore such unchoke for now.
     }
 }
 
@@ -80,11 +84,10 @@ void Session::protocol() {
                 break;
             case EventType::BcastHave:
                 HaveMsg{static_cast<BcastHaveEvent *>(e.get())->piece_id}.writeTo(bw);
-                if (self_interest == InterestStatus::Interested && (*peer_own - self_own).empty()) {
-                    self_interest = InterestStatus::NotInterested;
+                if ((*peer_own - self_own).empty()) {
                     NotInterestedMsg{}.writeTo(bw);
+                    bw.flush();
                 }
-                bw.flush();
                 break;
             case EventType::MsgChoke:
                 self_choke = ChokeStatus::Choked;
@@ -114,7 +117,6 @@ void Session::protocol() {
                     break;
                 }
                 if (!(*peer_own - self_own).empty()) {
-                    self_interest = true;
                     InterestedMsg{}.writeTo(bw);
                     bw.flush();
                 }
@@ -133,10 +135,8 @@ void Session::protocol() {
                 if (!self_own.isRequested(piece_msg.piece_id))
                     panic("received a piece that self didn't request");
                 repo.save(piece_msg.piece_id, piece_msg.getPiece()); // moved
-                {
-                    self_own.setOwned(piece_msg.piece_id);
-                    sc.broadcastHave(piece_msg.piece_id);
-                }
+                self_own.setOwned(piece_msg.piece_id);
+                sc.broadcastHave(piece_msg.piece_id);
                 if (self_own.owningAll() && peer_own->owningAll()) {
                     isDone = true;
                     break;
