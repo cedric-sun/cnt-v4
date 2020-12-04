@@ -13,8 +13,8 @@ Acceptor::Acceptor(int port) {
     ::sockaddr_in addr{
             .sin_family = AF_INET,
             .sin_port = ::htons(port),
-            .sin_addr.s_addr = ::htonl(INADDR_ANY)
     };
+    addr.sin_addr.s_addr = ::htonl(INADDR_ANY);
     if (::bind(server_socket_fd, reinterpret_cast<const sockaddr *>(&addr), sizeof(addr)) == -1)
         panic("bind");
     if (::listen(server_socket_fd, ACCEPT_QUEUE_SIZE) == -1)

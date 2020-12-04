@@ -8,9 +8,10 @@
 #include "../utils/class_utils.hpp"
 #include "../utils/err_utils.hpp"
 #include <sys/socket.h>
-#include <utility>
+#include <unistd.h>
 #include <atomic>
-#include <cstdint>
+#include <utility>
+
 
 class Connection : public IReader, public IWriter {
 private:
