@@ -4,6 +4,7 @@
 #define CNT5106_V4_ASYNCMSGSCANNER_HPP
 
 #include "../utils/err_utils.hpp"
+#include "../utils/class_utils.hpp"
 #include <thread>
 
 class BufferedReader;

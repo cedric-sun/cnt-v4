@@ -29,7 +29,12 @@ public:
 
     void operator=(Connection &&) = delete;
 
-    ~Connection() override { close(); }
+    ~Connection() override {
+        if (fd != RUIN_FD) {
+            ::close(fd);
+            fd = RUIN_FD;
+        }
+    }
 
     int read(void *buf, int length) override {
         int n = ::recv(fd, buf, length, 0);
@@ -43,13 +48,6 @@ public:
         int n = ::send(fd, buf, length, 0);
         if (n != length)
             panic("::send() failure");
-    }
-
-    void close() {
-        if (fd != RUIN_FD) {
-            ::close(fd);
-            fd = RUIN_FD;
-        }
     }
 
     // thread-safe

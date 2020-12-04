@@ -9,7 +9,6 @@
 
 class PieceBitfieldSnapshot {
     friend PieceBitfield::PieceBitfield(PieceBitfieldSnapshot &&);
-
 private:
     std::vector<PieceStatus> sv;
 public:

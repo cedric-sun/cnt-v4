@@ -4,9 +4,10 @@
 #define CNT5106_V4_PIECEBITFIELD_HPP
 
 #include "AbstractPieceBitfield.hpp"
-#include "PieceBitfieldSnapshot.hpp"
 #include "../utils/class_utils.hpp"
 #include "../utils/err_utils.hpp"
+
+class PieceBitfieldSnapshot;
 
 class PieceBitfield : public AbstractPieceBitfield {
 private:
@@ -19,14 +20,7 @@ private:
     bool try_lock() const override { return true; } // todo ensure `true` is ok for noop try_lock
 
 public:
-    explicit PieceBitfield(PieceBitfieldSnapshot &&pb_snap)
-            : AbstractPieceBitfield{std::move(pb_snap.sv)} {
-        n_owned = 0;
-        for (const auto &e : sv) {
-            if (e == PieceStatus::OWNED)
-                n_owned++;
-        }
-    }
+    explicit PieceBitfield(PieceBitfieldSnapshot &&pb_snap);
 
     DFT_MOVE_CTOR_ONLY(PieceBitfield)
 

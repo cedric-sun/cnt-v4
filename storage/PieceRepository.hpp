@@ -4,11 +4,10 @@
 #define CNT5106_V4_PIECEREPOSITORY_HPP
 
 #include "Piece.hpp"
+#include "File.hpp"
 #include <memory>
 #include <unordered_map>
 #include <shared_mutex>
-
-class File;
 
 class PieceRepository {
 private:

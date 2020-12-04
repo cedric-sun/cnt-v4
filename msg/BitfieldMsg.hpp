@@ -5,7 +5,6 @@
 
 #include "ActualMsg.hpp"
 #include "../piecebitfield/PieceBitfieldSnapshot.hpp"
-#include "../utils/uptr_cast.hpp"
 #include "../utils/err_utils.hpp"
 
 class BitfieldMsg : public ActualMsg {
@@ -13,27 +12,27 @@ private:
     PieceBitfieldSnapshot snapshot;
 protected:
     [[nodiscard]] int payloadSize() const override {
-        return piecebf.byteCount();
+        return snapshot.byteCount();
     }
 
     void writePayloadTo(BufferedWriter &w) const override {
         //TODO: lock?
-        piecebf.writeTo(w);
+        snapshot.writeTo(w);
     }
 
 public:
     explicit BitfieldMsg(PieceBitfieldSnapshot &&snapshot)
             : ActualMsg{MsgType::Bitfield}, snapshot{std::move(snapshot)} {}
 
-    PieceBitfield extract() {
+    PieceBitfieldSnapshot extract() {
         return std::move(snapshot);
     }
 
     static std::unique_ptr<BitfieldMsg> readFrom(BufferedReader &r) {
-        auto msg = ActualMsg::readFrom(r);
-        if (msg->type != MsgType::Bitfield)
+        auto msg_up = ActualMsg::readFrom(r);
+        if (msg_up->type != MsgType::Bitfield)
             panic("Expecting Bitfield, but received something else.");
-        return static_unique_ptr_cast<BitfieldMsg>(std::move(msg));
+        return std::unique_ptr<BitfieldMsg>{static_cast<BitfieldMsg*>(msg_up.release())};
     }
 };
 

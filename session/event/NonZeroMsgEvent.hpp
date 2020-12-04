@@ -15,19 +15,12 @@ protected:
 public:
     explicit NonZeroMsgEvent(MsgT msg) : Event{ET}, msg{std::move(msg)} {}
 
-    virtual MsgT extract() { return msg; }
+    virtual MsgT extract() { return std::move(msg); }
 };
 
 using HaveMsgEvent = NonZeroMsgEvent<HaveMsg, EventType::MsgHave>;
 using RequestMsgEvent = NonZeroMsgEvent<RequestMsg, EventType::MsgRequest>;
-
-class PieceMsgEvent : public NonZeroMsgEvent<PieceMsg, EventType::MsgPiece> {
-public:
-    // UB when called twice
-    PieceMsg extract() override {
-        return std::move(msg);
-    }
-};
+using PieceMsgEvent = NonZeroMsgEvent<PieceMsg, EventType::MsgPiece>;
 
 
 #endif //CNT5106_V4_NONZEROMSGEVENT_HPP

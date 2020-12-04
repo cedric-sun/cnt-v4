@@ -2,7 +2,6 @@
 
 #include "PieceRepository.hpp"
 #include "File.hpp"
-#include <mutex>
 
 // precondition: m_cache exclusively acquired
 void PieceRepository::ensureSpace(const int64_t size) {

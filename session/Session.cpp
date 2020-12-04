@@ -18,7 +18,7 @@ void Session::setup() {
         snap.emplace(self_own.snapshot());
         is_bcast_ready = true;
     }
-    spbf->writeTo(bw);
+    snap->writeTo(bw);
     bw.flush();
     peer_id = HandshakeMsg::readFrom(br).peer_id;
     if (expected_peer_id != EPID_NO_PREFERENCE && peer_id != expected_peer_id)
@@ -113,7 +113,7 @@ void Session::protocol() {
                 break;
             case EventType::MsgHave: {
                 auto have_msg = static_cast<HaveMsgEvent *>(e.get())->extract();
-                if (peer_own->isOwned(i))
+                if (peer_own->isOwned(have_msg.piece_id))
                     panic("peer send HAVE for an piece index that self think peer already owned");
                 peer_own->setOwned(have_msg.piece_id);
                 if (self_own.owningAll() && peer_own->owningAll()) {
@@ -152,7 +152,6 @@ void Session::protocol() {
         }
     }
     sc.relinquish(this);
-    conn_up->close();
     if (amsc.has_value())
         amsc->stop();
     end_cb();

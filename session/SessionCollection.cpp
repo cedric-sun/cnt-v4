@@ -119,12 +119,12 @@ void SessionCollection::tryPreempt(const Session *const s_ref) {
     if (!wrapper_sn.has_value())
         panic("tryPreempt() on an unknown session address");
     if (pn_set->size() < n_pn) {
-        pn_set->add(wrapper_sn);
+        pn_set->add(*wrapper_sn);
         wrapper_sn->get().s.unchoke();
         return;
     }
     if (!opt.has_value()) {
-        opt.emplace(wrapper_sn);
+        opt.emplace(*wrapper_sn);
         wrapper_sn->get().s.unchoke();
     }
 }
@@ -140,9 +140,9 @@ void SessionCollection::relinquish(const Session *s_ref) {
     }
     if (!wrapper_sn.has_value())
         panic("relinquish() on an unknown session address");
-    if (pn_set->contains(wrapper_sn)) {
+    if (pn_set->contains(*wrapper_sn)) {
         wrapper_sn->get().s.choke();
-        pn_set->remove(wrapper_sn);
+        pn_set->remove(*wrapper_sn);
     } else if (opt.has_value()
                && std::addressof(opt->get()) == std::addressof(wrapper_sn->get())) {
         wrapper_sn->get().s.choke();

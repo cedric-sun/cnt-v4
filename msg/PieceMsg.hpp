@@ -17,8 +17,6 @@ public:
     PieceMsg(const int i, std::shared_ptr<Piece> piece)
             : ActualMsg{MsgType::Piece}, piece_id(i), piece{std::move(piece)} {}
 
-    PieceMsg(PieceMsg &&other) noexcept: PieceMsg{other.piece_id, std::move(other.piece)} {}
-
     DFT_MOVE_CTOR_ONLY(PieceMsg)
 
     // return a moved piece shared_ptr; UB when called twice;
