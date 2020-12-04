@@ -3,7 +3,6 @@
 #include "AsyncMsgScanner.hpp"
 #include "../msg/ActualMsg.hpp"
 #include "event/NonZeroMsgEvent.hpp"
-#include "../utils/uptr_cast.hpp"
 
 #include "event/EventQueue.hpp"
 

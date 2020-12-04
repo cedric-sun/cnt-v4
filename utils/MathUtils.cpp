@@ -3,4 +3,4 @@
 #include "MathUtils.hpp"
 
 std::default_random_engine MathUtils::rng{std::random_device{}()};
-std::uniform_int_distribution MathUtils::uniform{};
+std::uniform_int_distribution<> MathUtils::uniform{};

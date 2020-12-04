@@ -15,7 +15,7 @@
 
 class Connection : public IReader, public IWriter {
 private:
-    static const int RUIN_FD = -1;
+    static constexpr int RUIN_FD = -1;
     int fd;
     std::atomic_int64_t recv_bcnt{0};
 public:

@@ -4,7 +4,6 @@
 #include "msg_instantiations.hpp"
 #include "BitfieldMsg.hpp"
 #include "PieceMsg.hpp"
-#include "../utils/err_utils.hpp"
 
 std::unique_ptr<ActualMsg> ActualMsg::readFrom(BufferedReader &r) {
     std::unique_ptr<ActualMsg> ret{nullptr};
@@ -28,8 +27,8 @@ std::unique_ptr<ActualMsg> ActualMsg::readFrom(BufferedReader &r) {
             ret = std::make_unique<HaveMsg>(read32ntohl(r));
             break;
         case MsgType::Bitfield: {
-            auto piecebf = SimplePieceBitfield::readFrom(r, n - 1);
-            ret = std::make_unique<BitfieldMsg>(std::move(piecebf));
+            auto snapshot = PieceBitfieldSnapshot::readFrom(r, n - 1);
+            ret = std::make_unique<BitfieldMsg>(std::move(snapshot));
         }
             break;
         case MsgType::Request:

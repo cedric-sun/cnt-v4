@@ -13,7 +13,7 @@ class SyncPieceBitfield : public AbstractPieceBitfield {
 private:
     std::atomic_int n_owned;
     mutable std::mutex m;
-
+public:
     void lock() const override {
         m.lock();
     }

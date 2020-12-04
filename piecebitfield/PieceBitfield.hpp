@@ -12,7 +12,7 @@ class PieceBitfieldSnapshot;
 class PieceBitfield : public AbstractPieceBitfield {
 private:
     int n_owned;
-
+public:
     void lock() const override {}
 
     void unlock() const override {}

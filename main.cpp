@@ -74,10 +74,6 @@ int main(int argc, char **argv) {
     for (const auto &pi : config.getPriorPeers()) {
         sc.newSession(Connection{pi.fqdn, pi.port}, pi.peer_id);
     }
-    {
-        using namespace std::chrono_literals;
-        std::this_thread::sleep_for(1s);
-    }
     sc.wait();
     return 0;
 }

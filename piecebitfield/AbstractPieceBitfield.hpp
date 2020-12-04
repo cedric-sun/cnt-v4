@@ -4,10 +4,11 @@
 #define CNT5106_V4_ABSTRACTPIECEBITFIELD_HPP
 
 #include "PieceStatus.hpp"
+#include "../utils/err_utils.hpp"
 #include <vector>
 
 class AbstractPieceBitfield {
-private:
+public:
     virtual void lock() const = 0;
 
     virtual void unlock() const = 0;
