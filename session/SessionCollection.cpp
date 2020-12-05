@@ -2,6 +2,7 @@
 
 #include "SessionCollection.hpp"
 #include "../utils/MathUtils.hpp"
+#include "../Logger.hpp"
 
 //TODO: what if pn / opt interval is sooooo short that pn / opt is selected again before
 // the selected pn / opt sessions' event queue can handle the unchoke event and change it's
@@ -78,6 +79,7 @@ void SessionCollection::pnAlgorithm() {
     }
     new_pn_set.unchokeAll();
     pn_set = std::move(new_pn_set);
+    logger.newPreferredNeighbors(pn_set->idVec());
 }
 
 // either absolutely don't send choke (when promotion happened during last opt interval),
@@ -105,6 +107,7 @@ void SessionCollection::optAlgorithm() {
     }
     // if promotion does happen, nothing need to be done.
     opt = lucky_rw;
+    logger.newOptUnchokedNeighbor(opt->get().s.getPeerID());
 }
 
 void SessionCollection::tryPreempt(const Session *const s_ref) {

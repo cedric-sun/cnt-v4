@@ -9,6 +9,7 @@
 #include "../utils/MathUtils.hpp"
 #include "../storage/PieceRepository.hpp"
 #include "SessionCollection.hpp"
+#include "../Logger.hpp"
 
 void Session::setup() {
     HandshakeMsg{self_peer_id}.writeTo(bw);
@@ -21,8 +22,14 @@ void Session::setup() {
     snap->writeTo(bw);
     bw.flush();
     peer_id = HandshakeMsg::readFrom(br).peer_id;
-    if (expected_peer_id != EPID_NO_PREFERENCE && peer_id != expected_peer_id)
-        panic("Received handshake from an unexpected peer.");
+    if (expected_peer_id != EPID_NO_PREFERENCE) { // self is client
+        if (peer_id != expected_peer_id) {
+            panic("Received handshake from an unexpected peer.");
+        }
+        logger.selfConnectedTo(peer_id);
+    } else { // self is server
+        logger.selfConnectedBy(peer_id);
+    }
     auto bf_msg = BitfieldMsg::readFrom(br);
     peer_own.emplace(bf_msg->extract());
     if (peer_own->owningAll() && self_own.owningAll()) {
@@ -94,17 +101,21 @@ void Session::protocol() {
                 break;
             case EventType::MsgChoke:
                 self_choke = ChokeStatus::Choked;
+                logger.chokeReceived(peer_id);
                 break;
             case EventType::MsgUnchoke:
                 self_choke = ChokeStatus::Unchoked;
+                logger.unchokeReceived(peer_id);
                 requestNextIfPossible();
                 break;
             case EventType::MsgInterest:
                 peer_interest = InterestStatus::Interested;
+                logger.interestedReceived(peer_id);
                 sc.tryPreempt(this);
                 break;
             case EventType::MsgNotInterest:
                 peer_interest = InterestStatus::NotInterested;
+                logger.NotInterestedReceived(peer_id);
                 if (peer_choke == ChokeStatus::Unchoked) {
                     // peer lost interest in self while it's unchoked;
                     // choke it immediately and try accommodate other session
@@ -113,6 +124,7 @@ void Session::protocol() {
                 break;
             case EventType::MsgHave: {
                 auto have_msg = static_cast<HaveMsgEvent *>(e.get())->extract();
+                logger.haveReceived(peer_id, have_msg.piece_id);
                 if (peer_own->isOwned(have_msg.piece_id))
                     panic("peer send HAVE for an piece index that self think peer already owned");
                 peer_own->setOwned(have_msg.piece_id);
@@ -151,6 +163,7 @@ void Session::protocol() {
                 break;
         }
     }
+    logger.fileDownloaded();
     sc.relinquish(this);
     if (amsc.has_value())
         amsc->stop();

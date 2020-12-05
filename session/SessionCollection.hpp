@@ -86,18 +86,25 @@ private:
         }
 
         void chokeAll() {
-            for (Sn &lang_ref : pns) {
-                lang_ref.s.choke();
+            for (Sn &sn : pns) {
+                sn.s.choke();
             }
         }
 
         void unchokeAll() {
-            for (Sn &lang_ref : pns) {
-                lang_ref.s.unchoke();
+            for (Sn &sn : pns) {
+                sn.s.unchoke();
             }
         }
 
         [[nodiscard]] bool empty() const { return pns.empty(); }
+
+        [[nodiscard]] std::vector<int> idVec() const {
+            std::vector<int> ret;
+            std::transform(pns.cbegin(), pns.cend(), std::back_inserter(ret),
+                           [](const Sn &sn) { return sn.s.getPeerID(); });
+            return ret;
+        }
     };
 
     std::vector<std::unique_ptr<Sn>> ss;

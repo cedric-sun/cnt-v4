@@ -48,7 +48,7 @@ private:
     std::atomic_bool is_bcast_ready{false};
     std::atomic_bool is_done{false};
 
-    int peer_id;
+    std::atomic_int peer_id;
     std::optional<PieceBitfield> peer_own;
     std::optional<AsyncMsgScanner> amsc;
 
@@ -92,6 +92,10 @@ public:
 
     void start() { // TODO: start after ctor is still not thread safe... issue memory barrier here
         prot_th.emplace(&Session::protocol, this);
+    }
+
+    [[nodiscard]] int getPeerID() const {
+        return peer_id;
     }
 
     // 1. We want the SessionCollection to create Session object
