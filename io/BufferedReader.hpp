@@ -12,7 +12,7 @@
 class BufferedReader : public IReader {
 private:
     IReader &r;
-    std::vector<Byte> buffer = std::vector<Byte>(64 * 1024); // 64 KiB default; size = capacity
+    std::vector<Byte> buffer = std::vector<Byte>(BUFFERED_READER_BUFSZ); // size = capacity
     int head{0}, tail{0};
 
     // precond: n <= buffer size

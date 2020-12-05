@@ -12,29 +12,34 @@
 #include "../Logger.hpp"
 
 void Session::setup() {
-    HandshakeMsg{self_peer_id}.writeTo(bw);
-    std::optional<PieceBitfieldSnapshot> snap;
-    {
-        const std::lock_guard lg{m_bcast};
-        snap.emplace(self_own.snapshot());
-        is_bcast_ready = true;
-    }
-    snap->writeTo(bw);
-    bw.flush();
-    peer_id = HandshakeMsg::readFrom(br).peer_id;
-    if (expected_peer_id != EPID_NO_PREFERENCE) { // self is client
-        if (peer_id != expected_peer_id) {
-            panic("Received handshake from an unexpected peer.");
+    {// sending
+        HandshakeMsg{self_peer_id}.writeTo(bw);
+        std::optional<BitfieldMsg> bf_msg;
+        {
+            const std::lock_guard lg{m_bcast};
+            bf_msg.emplace(self_own.snapshot());
+            is_bcast_ready = true;
         }
-        logger.selfConnectedTo(peer_id);
-    } else { // self is server
-        logger.selfConnectedBy(peer_id);
+        bf_msg->writeTo(bw);
+        bw.flush();
     }
-    auto bf_msg = BitfieldMsg::readFrom(br);
-    peer_own.emplace(bf_msg->extract());
-    if (peer_own->owningAll() && self_own.owningAll()) {
-        is_done = true;
-        return;
+    {//receiving
+        peer_id = HandshakeMsg::readFrom(br).peer_id;
+        if (expected_peer_id != EPID_NO_PREFERENCE) { // self is client
+            if (peer_id != expected_peer_id) {
+                panic("Received handshake from an unexpected peer.");
+            }
+            logger.selfConnectedTo(peer_id);
+        } else { // self is server
+            logger.selfConnectedBy(peer_id);
+        }
+
+        auto bf_msg = BitfieldMsg::readFrom(br);
+        peer_own.emplace(bf_msg->extract());
+        if (peer_own->owningAll() && self_own.owningAll()) {
+            is_done = true;
+            return;
+        }
     }
     if ((*peer_own - self_own).empty()) {
         NotInterestedMsg{}.writeTo(bw);

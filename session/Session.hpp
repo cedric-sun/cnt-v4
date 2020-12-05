@@ -86,7 +86,7 @@ public:
                      Connection &&conn, PieceRepository &repo, SyncPieceBitfield &self_own,
                      std::function<void(void)> end_cb, SessionCollection &sc, Logger &logger)
             : self_peer_id{self_peer_id}, expected_peer_id{expected_peer_id}, conn{std::move(conn)},
-              br{conn}, bw{conn}, repo{repo}, self_own{self_own}, end_cb{std::move(end_cb)},
+              br{this->conn}, bw{this->conn}, repo{repo}, self_own{self_own}, end_cb{std::move(end_cb)},
               sc{sc}, logger{logger} {
     }
 

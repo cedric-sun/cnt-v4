@@ -14,9 +14,11 @@ private:
     IWriter &w;
 
     // [0,size()) is data, capacity doesn't change during lifetime.
-    std::vector<Byte> buffer = std::vector<Byte>(64 * 1024);
+    std::vector<Byte> buffer;
 public:
-    BufferedWriter(IWriter &w) : w(w) {}
+    BufferedWriter(IWriter &w) : w(w) {
+        buffer.reserve(BUFFERED_WRITER_BUFSZ);
+    }
 
     DISABLE_COPY_MOVE(BufferedWriter)
 

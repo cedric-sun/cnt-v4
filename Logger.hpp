@@ -28,7 +28,7 @@ private:
 public:
     Logger(const int self_peer_id, const std::string &path)
             : self_peer_id{self_peer_id} {
-        log_stream = std::fopen(path.c_str(), "w");
+        log_stream = stdout;//std::fopen(path.c_str(), "w");
         if (log_stream == nullptr)
             panic("can't open log file for write");
     }
@@ -76,7 +76,7 @@ public:
     }
 
     void NotInterestedReceived(int peer_id) {
-        logPrintf("Peer [%d] received the ‘interested’ message from [%d].\n", self_peer_id,
+        logPrintf("Peer [%d] received the ‘not interested’ message from [%d].\n", self_peer_id,
                   peer_id);
     }
 

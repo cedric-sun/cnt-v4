@@ -43,6 +43,5 @@ void AsyncMsgScanner::scanLoop() {
             default:
                 panic("Message of unknown type is received.");
         }
-        break;
     }
 }

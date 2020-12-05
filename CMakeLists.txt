@@ -8,6 +8,8 @@ find_package(Threads REQUIRED)
 
 add_compile_definitions(PANIC_BACKTRACE_FRAME_N=20)
 add_compile_definitions(ACCEPT_QUEUE_SIZE=20)
+add_compile_definitions(BUFFERED_READER_BUFSZ=65536) #64 KiB
+add_compile_definitions(BUFFERED_WRITER_BUFSZ=65536) #64 KiB
 
 set (CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address -ggdb3")
 set (CMAKE_LINKER_FLAGS_DEBUG "${CMAKE_LINKER_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
