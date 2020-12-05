@@ -9,6 +9,23 @@ find_package(Threads REQUIRED)
 add_compile_definitions(PANIC_BACKTRACE_FRAME_N=20)
 add_compile_definitions(ACCEPT_QUEUE_SIZE=20)
 
+set (CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address -ggdb3")
+set (CMAKE_LINKER_FLAGS_DEBUG "${CMAKE_LINKER_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
+
+
+set(CNT_PROJECT_DIR "cnt_project")
+
+FILE(MAKE_DIRECTORY ${CNT_PROJECT_DIR})
+
+add_custom_target(cnt_clean
+        COMMAND ${CMAKE_COMMAND} -E rm -r ${CNT_PROJECT_DIR})
+
+add_custom_target(cnt_project_copy_config
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_CURRENT_SOURCE_DIR}/resources/testconfig ${CNT_PROJECT_DIR})
+
+add_dependencies(cnt_project_copy_config cnt_clean)
+
 add_executable(peerProcess
         piecebitfield/PieceBitfield.cpp
         piecebitfield/AbstractPieceBitfield.cpp
@@ -27,5 +44,9 @@ add_executable(peerProcess
         session/SessionCollection.cpp
         session/Session.cpp
         )
+
+set_target_properties(peerProcess PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CNT_PROJECT_DIR})
+
+add_dependencies(peerProcess cnt_project_copy_config)
 
 target_link_libraries(peerProcess PRIVATE Threads::Threads)

@@ -10,7 +10,7 @@ private:
     const int64_t mSize;
 
     static FILE *openNew(const std::string &path) {
-        FILE *f = std::fopen(path.c_str(), "r+");
+        FILE *f = std::fopen(path.c_str(), "w+");
         if (f == nullptr)
             panic("can't create new file for read & write");
         return f;

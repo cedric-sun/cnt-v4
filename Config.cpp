@@ -4,9 +4,10 @@
 #include <fstream>
 #include "utils/err_utils.hpp"
 #include <unordered_set>
+#include <filesystem>
 
 Config::Config(int self_peer_id)
-        : self_peer_id{self_peer_id},
+        : self_peer_id{self_peer_id}, peer_dir{std::to_string(self_peer_id)},
           log_filepath{"log_peer_" + std::to_string(self_peer_id) + ".log"} {
     std::ifstream common_ifs{"Common.cfg"};
     std::string key, value;
@@ -14,17 +15,17 @@ Config::Config(int self_peer_id)
         while (common_ifs >> key >> value) {
             // switch can't work on std::string
             if (key == "NumberOfPreferredNeighbors") {
-                num_pn = std::stoi(key);
+                num_pn = std::stoi(value);
             } else if (key == "UnchokingInterval") {
-                pn_interval = std::stoi(key);
+                pn_interval = std::stoi(value);
             } else if (key == "OptimisticUnchokingInterval") {
-                opt_interval = std::stoi(key);
+                opt_interval = std::stoi(value);
             } else if (key == "FileName") {
-                file_path = key;
+                file_path = std::filesystem::path{peer_dir} / value;
             } else if (key == "FileSize") {
-                file_size = std::stoi(key);
+                file_size = std::stoi(value);
             } else if (key == "PieceSize") {
-                piece_size = std::stoi(key);
+                piece_size = std::stoi(value);
             } else {
                 panic("unknown key name in Common.cfg");
             }
@@ -44,7 +45,7 @@ Config::Config(int self_peer_id)
         idset.insert(peer_id);
         //TODO ensure the same (hostname, port) pair does not appear multiple time
         if (!self_found && peer_id == self_peer_id) {
-            this->has_file = has_file;
+            this->has_file = static_cast<bool>(has_file);
             this->self_port = port;
             self_found = true;
         }

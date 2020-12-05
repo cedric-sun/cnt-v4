@@ -23,7 +23,7 @@ private:
     const std::string log_filepath;
     int self_port;
     bool has_file;
-    std::string file_path;
+    std::string peer_dir, file_path;
     std::vector<PeerInfo> prior_peers;
     int n_total_peer{0};
 
@@ -78,6 +78,10 @@ public:
 
     [[nodiscard]] int totalPeerCount() const {
         return n_total_peer;
+    }
+
+    [[nodiscard]] std::string getPeerDir() const {
+        return peer_dir;
     }
 };
 

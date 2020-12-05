@@ -38,7 +38,7 @@ static void validateConfig(const Config &config) {
         // ensure the existence of the peer dir
         std::error_code ec;
         // existing directory is not an error
-        std::filesystem::create_directory(config.getFilePath(), ec);
+        std::filesystem::create_directory(config.getPeerDir(), ec);
         if (ec)
             panic("std::filesystem::create_directory");
     }
