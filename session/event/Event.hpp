@@ -14,6 +14,8 @@ public:
     const EventType event_type;
 
     explicit Event(const EventType event_type) : event_type(event_type) {}
+
+    virtual ~Event() = default;
 };
 
 

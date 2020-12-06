@@ -62,7 +62,8 @@ private:
 
         bool contains(std::reference_wrapper<Sn> sn_ref) {
             auto it = std::lower_bound(pns.cbegin(), pns.cend(), sn_ref, addr_comp);
-            return std::addressof(it->get()) == std::addressof(sn_ref.get());
+            return it != pns.cend() &&
+                   std::addressof(it->get()) == std::addressof(sn_ref.get());
         }
 
         // precondition: contains(sn) == true
