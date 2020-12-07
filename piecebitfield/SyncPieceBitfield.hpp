@@ -29,7 +29,8 @@ public:
 public:
     explicit SyncPieceBitfield(const int size, bool owningAllPiece)
             : AbstractPieceBitfield{
-            std::vector(size, owningAllPiece ? PieceStatus::OWNED : PieceStatus::ABSENT)} {}
+            std::vector(size, owningAllPiece ? PieceStatus::OWNED : PieceStatus::ABSENT)},
+              n_owned{owningAllPiece ? size : 0} {}
 
     PieceBitfieldSnapshot snapshot() const {
         std::vector<PieceStatus> tmp(sv.size());

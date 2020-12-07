@@ -40,6 +40,9 @@ public:
         int n = ::recv(fd, buf, length, 0);
         if (n == -1)
             panic("::recv() failure");
+        if (n==0) {
+            std::puts("peer closed the socket.");
+        }
         recv_bcnt += n;
         return n;
     }

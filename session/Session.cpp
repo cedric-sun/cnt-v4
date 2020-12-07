@@ -103,6 +103,10 @@ void Session::protocol() {
                     NotInterestedMsg{}.writeTo(bw);
                 }
                 bw.flush();
+                if (self_own.owningAll() && peer_own->owningAll()) {
+                    is_done = true;
+                    break;
+                }
                 break;
             case EventType::MsgChoke:
                 self_choke = ChokeStatus::Choked;
@@ -159,10 +163,6 @@ void Session::protocol() {
                 self_own.setOwned(piece_msg.piece_id);
                 logger.pieceDownloaded(peer_id, piece_msg.piece_id, self_own.numOwned());
                 sc.broadcastHave(piece_msg.piece_id);
-                if (self_own.owningAll() && peer_own->owningAll()) {
-                    is_done = true;
-                    break;
-                }
                 if (self_choke == ChokeStatus::Unchoked) {
                     requestNextIfPossible();
                 }
