@@ -101,8 +101,8 @@ void Session::protocol() {
                 HaveMsg{static_cast<BcastHaveEvent *>(e.get())->piece_id}.writeTo(bw);
                 if ((*peer_own - self_own).empty()) {
                     NotInterestedMsg{}.writeTo(bw);
-                    bw.flush();
                 }
+                bw.flush();
                 break;
             case EventType::MsgChoke:
                 self_choke = ChokeStatus::Choked;
@@ -157,6 +157,7 @@ void Session::protocol() {
                     panic("received a piece that self didn't request");
                 repo.save(piece_msg.piece_id, piece_msg.getPiece()); // moved
                 self_own.setOwned(piece_msg.piece_id);
+                logger.pieceDownloaded(peer_id, piece_msg.piece_id, self_own.numOwned());
                 sc.broadcastHave(piece_msg.piece_id);
                 if (self_own.owningAll() && peer_own->owningAll()) {
                     is_done = true;

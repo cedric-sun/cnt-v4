@@ -120,7 +120,7 @@ private:
     PieceRepository &repo;
     Logger &logger;
 
-    std::optional<std::thread> gc_thread;
+    std::optional<std::jthread> gc_thread;
     std::condition_variable cond_gc;
     std::condition_variable cond_end;
 

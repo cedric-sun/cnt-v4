@@ -6,9 +6,17 @@
 
 #include "event/EventQueue.hpp"
 
+#include <cxxabi.h>
+
 void AsyncMsgScanner::scanLoop() {
+    std::unique_ptr<ActualMsg> amsg_up{nullptr};
     while (true) {
-        auto amsg_up = ActualMsg::readFrom(br);
+        try {
+            amsg_up = ActualMsg::readFrom(br);
+        } catch (abi::__forced_unwind &) {
+            std::puts("scanLoop cancel exceptoin caputred.");
+            throw;
+        }
         switch (amsg_up->type) {
             case MsgType::Choke:
                 q.enq(std::make_unique<Event>(EventType::MsgChoke));

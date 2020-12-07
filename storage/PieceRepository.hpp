@@ -11,7 +11,7 @@
 
 class PieceRepository {
 private:
-    static const int kMemLimit = 16 * 1024 * 1024; // 16 MiB piece cache
+    static constexpr int kMemLimit = PIECE_CACHE_SIZE;
 
     std::unique_ptr<File> f;
     const int64_t piece_size;

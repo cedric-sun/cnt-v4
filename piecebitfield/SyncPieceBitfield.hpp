@@ -59,6 +59,10 @@ public:
         return static_cast<int>(n_owned) == sv.size();
     }
 
+    int numOwned() const {
+        return static_cast<int>(n_owned);
+    }
+
     void setRequested(const int i) {
         checkRange(i);
         const std::lock_guard lg{m};

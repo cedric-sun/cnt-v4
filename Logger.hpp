@@ -47,7 +47,7 @@ public:
         logPrintf("Peer [%d] is connected from Peer [%d].\n", self_peer_id, client_peer_id);
     }
 
-    void newPreferredNeighbors(std::vector<int> peer_ids) {
+    void newPreferredNeighbors(const std::vector<int> &peer_ids) {
         logPrintf("Peer [%d] has the preferred neighbors [%s].\n", self_peer_id,
                   strVector(peer_ids).c_str());
     }
@@ -80,9 +80,16 @@ public:
                   peer_id);
     }
 
+    void pieceDownloaded(int peer_id, int piece_id, int num_owned_piece) {
+        logPrintf("Peer [%d] has downloaded the piece [%d] from [%d]. "
+                  "Now the number of pieces it has is [%d].\n", self_peer_id, piece_id, peer_id,
+                  num_owned_piece);
+    }
+
     void fileDownloaded() {
         logPrintf("Peer [%d] has downloaded the complete file.\n", self_peer_id);
     }
+
 #undef logPrintf
 };
 
