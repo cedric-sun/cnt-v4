@@ -52,5 +52,7 @@ Config::Config(int self_peer_id)
         if (!self_found)
             prior_peers.emplace_back(peer_id, port, fqdn);
     }
+    if (!self_found)
+        panic("can't find self (peer id " + std::to_string(self_peer_id) + " ) inside Common.cfg");
     n_total_peer = idset.size();
 }

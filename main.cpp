@@ -45,7 +45,7 @@ static void validateConfig(const Config &config) {
 }
 
 void startServer(const int port, SessionCollection &sc) {
-    std::thread{[&] {
+    std::thread{[port, &sc] {
         Acceptor acc{port};
         while (true) {
             sc.newSession(acc.accept(), Session::EPID_NO_PREFERENCE);
