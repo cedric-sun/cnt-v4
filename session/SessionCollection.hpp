@@ -56,6 +56,8 @@ private:
 
         SnRefSet &operator=(SnRefSet &&) = default;
 
+        DISABLE_COPY(SnRefSet)
+
         [[nodiscard]] int size() const {
             return pns.size();
         }
@@ -109,7 +111,7 @@ private:
     };
 
     std::vector<std::unique_ptr<Sn>> ss;
-    std::optional<SnRefSet> pn_set{std::nullopt};
+    SnRefSet pn_set{};
     std::optional<std::reference_wrapper<Sn>> opt{std::nullopt};
     std::mutex m;
 

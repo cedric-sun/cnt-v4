@@ -69,17 +69,15 @@ void SessionCollection::pnAlgorithm() {
         if (ss[i]->is_active)
             new_pn_set.add(*ss[i]);
     }
-    if (pn_set.has_value()) {
-        auto supplanted = *pn_set - new_pn_set;
-        if (!supplanted.empty()) { // promotion happened;
-            supplanted.chokeAll();
-            opt.reset();
-        }
-        // if promotion doesn't happen, nothing need to be done.
+    auto supplanted = pn_set - new_pn_set;
+    if (!supplanted.empty()) { // promotion happened;
+        supplanted.chokeAll();
+        opt.reset();
     }
+    // if promotion doesn't happen, nothing need to be done.
     new_pn_set.unchokeAll();
     pn_set = std::move(new_pn_set);
-    logger.newPreferredNeighbors(pn_set->idVec());
+    logger.newPreferredNeighbors(pn_set.idVec());
 }
 
 // either absolutely don't send choke (when promotion happened during last opt interval),
@@ -121,10 +119,10 @@ void SessionCollection::tryPreempt(const Session *const s_ref) {
     }
     if (!wrapper_sn.has_value())
         panic("tryPreempt() on an unknown session address");
-    if (pn_set->size() < n_pn) {
-        if (pn_set->contains(*wrapper_sn))
+    if (pn_set.size() < n_pn) {
+        if (pn_set.contains(*wrapper_sn))
             panic("the preempting session is already a pn.");
-        pn_set->add(*wrapper_sn);
+        pn_set.add(*wrapper_sn);
         wrapper_sn->get().s.unchoke();
         return;
     }
@@ -145,9 +143,9 @@ void SessionCollection::relinquish(const Session *s_ref) {
     }
     if (!wrapper_sn.has_value())
         panic("relinquish() on an unknown session address");
-    if (pn_set->contains(*wrapper_sn)) {
+    if (pn_set.contains(*wrapper_sn)) {
         wrapper_sn->get().s.choke();
-        pn_set->remove(*wrapper_sn);
+        pn_set.remove(*wrapper_sn);
     } else if (opt.has_value()
                && std::addressof(opt->get()) == std::addressof(wrapper_sn->get())) {
         wrapper_sn->get().s.choke();
