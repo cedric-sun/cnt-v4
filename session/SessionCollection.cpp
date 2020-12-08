@@ -163,6 +163,10 @@ void SessionCollection::relinquish(const Session *s_ref) {
     }
 }
 
+//TODO
+// 1. either remove the reference to the just free-ed session here, or use weak_ptr in SnRefSet
+//      to avoid dangling reference_wrapper (the relinquish should be enough to remove it...?)
+// 2. downlaoded the complete file is a event of bitfield ; don't output it twice
 void SessionCollection::cleanUp() {
     std::unique_lock ul{m};
     cond_gc.wait(ul);
@@ -177,5 +181,5 @@ void SessionCollection::cleanUp() {
 void SessionCollection::wait() {
     static std::mutex m_end;
     std::unique_lock ul{m_end};
-    cond_end.wait(ul);
+    cond_end.wait(ul, [this]() { return n_exp_session == 0; });
 }

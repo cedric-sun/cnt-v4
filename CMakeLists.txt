@@ -12,20 +12,20 @@ add_compile_definitions(BUFFERED_READER_BUFSZ=65536) #64 KiB
 add_compile_definitions(BUFFERED_WRITER_BUFSZ=65536) #64 KiB
 add_compile_definitions(PIECE_CACHE_SIZE=16777216) # 16 MiB
 
-set (CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address -ggdb3")
-set (CMAKE_LINKER_FLAGS_DEBUG "${CMAKE_LINKER_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
+#set (CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address -ggdb3")
+#set (CMAKE_LINKER_FLAGS_DEBUG "${CMAKE_LINKER_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
 
+# choose the config suite to use
+set(CNT_CONFIG_SUITE "testconfig1")
 
 set(CNT_PROJECT_DIR "cnt_project")
-
-FILE(MAKE_DIRECTORY ${CNT_PROJECT_DIR})
 
 add_custom_target(cnt_clean
         COMMAND ${CMAKE_COMMAND} -E rm -r ${CNT_PROJECT_DIR})
 
 add_custom_target(cnt_project_copy_config
         COMMAND ${CMAKE_COMMAND} -E copy_directory
-        ${CMAKE_CURRENT_SOURCE_DIR}/resources/testconfig ${CNT_PROJECT_DIR})
+        ${CMAKE_CURRENT_SOURCE_DIR}/resources/${CNT_CONFIG_SUITE} ${CNT_PROJECT_DIR})
 
 add_dependencies(cnt_project_copy_config cnt_clean)
 

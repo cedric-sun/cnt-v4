@@ -16,7 +16,7 @@ public:
 private:
     EventQueue &q;
     BufferedReader &br;
-    std::optional<std::thread> tup{std::nullopt};
+    std::optional<std::jthread> tup{std::nullopt};
 
     void scanLoop();
 
@@ -30,7 +30,6 @@ public:
     void stop() {
         if (pthread_cancel(tup->native_handle()) != 0)
             panic("pthread_cancel failed");
-        tup->join();
     }
 };
 
