@@ -169,12 +169,17 @@ void SessionCollection::relinquish(const Session *s_ref) {
 // 2. downlaoded the complete file is a event of bitfield ; don't output it twice
 void SessionCollection::cleanUp() {
     std::unique_lock ul{m};
-    cond_gc.wait(ul);
-    ss.erase(std::remove_if(ss.begin(), ss.end(), [](const auto &e) {
-        return e->s.isDone();
-    }), ss.end());
-    if (ss.empty() && n_exp_session == 0) {
-        cond_end.notify_all();
+    while (true) {
+        cond_gc.wait(ul, [this] {
+            return std::any_of(ss.cbegin(), ss.cend(), [](const auto &e) { return e->s.isDone(); });
+        });
+        ss.erase(std::remove_if(ss.begin(), ss.end(), [](const auto &e) {
+            return e->s.isDone();
+        }), ss.end());
+        if (ss.empty() && n_exp_session == 0) {
+            cond_end.notify_all();
+            break;
+        }
     }
 }
 
