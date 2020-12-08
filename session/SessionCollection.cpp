@@ -122,6 +122,8 @@ void SessionCollection::tryPreempt(const Session *const s_ref) {
     if (!wrapper_sn.has_value())
         panic("tryPreempt() on an unknown session address");
     if (pn_set->size() < n_pn) {
+        if (pn_set->contains(*wrapper_sn))
+            panic("the preempting session is already a pn.");
         pn_set->add(*wrapper_sn);
         wrapper_sn->get().s.unchoke();
         return;

@@ -12,7 +12,7 @@ Acceptor::Acceptor(int port) {
         panic("socket");
     ::sockaddr_in addr{
             .sin_family = AF_INET,
-            .sin_port = ::htons(port),
+            .sin_port = ::htons(static_cast<uint16_t>(port)),
     };
     addr.sin_addr.s_addr = ::htonl(INADDR_ANY);
     if (::bind(server_socket_fd, reinterpret_cast<const sockaddr *>(&addr), sizeof(addr)) == -1)

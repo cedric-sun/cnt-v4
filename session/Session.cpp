@@ -130,6 +130,8 @@ void Session::protocol() {
                     // choke it immediately and try accommodate other session
                     sc.relinquish(this);
                 }
+                ChokeMsg{}.writeTo(bw);
+                bw.flush();
                 break;
             case EventType::MsgHave: {
                 auto have_msg = static_cast<HaveMsgEvent *>(e.get())->extract();
