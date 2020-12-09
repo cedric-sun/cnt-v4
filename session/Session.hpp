@@ -13,7 +13,6 @@
 #include "status.hpp"
 #include <memory>
 #include <thread>
-#include <functional>
 #include <utility>
 
 class SyncPieceBitfield;
@@ -36,7 +35,6 @@ private:
     BufferedWriter bw;
     PieceRepository &repo;
     SyncPieceBitfield &self_own;
-    std::function<void(void)> end_cb;
     SessionCollection &sc;
     Logger &logger;
 
@@ -46,7 +44,6 @@ private:
     std::mutex m_bcast;
     std::atomic_bool is_active{false};
     std::atomic_bool is_bcast_ready{false};
-    std::atomic_bool is_gc_ready{false};
 
     bool is_done{false};
     std::atomic_int peer_id;
@@ -87,9 +84,9 @@ private:
 public:
     explicit Session(const int self_peer_id, const int expected_peer_id,
                      Connection &&conn, PieceRepository &repo, SyncPieceBitfield &self_own,
-                     std::function<void(void)> end_cb, SessionCollection &sc, Logger &logger)
+                     SessionCollection &sc, Logger &logger)
             : self_peer_id{self_peer_id}, expected_peer_id{expected_peer_id}, conn{std::move(conn)},
-              br{this->conn}, bw{this->conn}, repo{repo}, self_own{self_own}, end_cb{std::move(end_cb)},
+              br{this->conn}, bw{this->conn}, repo{repo}, self_own{self_own},
               sc{sc}, logger{logger} {
     }
 
@@ -142,11 +139,6 @@ public:
     void unchoke() {
         if (is_active)
             eq.enq(std::make_unique<Event>(EventType::TimerUnchoke));
-    }
-
-    // if this session is willing to be gc-ed
-    [[nodiscard]] bool isGcReady() const {
-        return is_gc_ready;
     }
 
     [[nodiscard]] bool isActive() const {

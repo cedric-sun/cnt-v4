@@ -5,10 +5,10 @@
 
 #include "../utils/err_utils.hpp"
 #include "../utils/class_utils.hpp"
+#include "event/EventQueue.hpp"
 #include <thread>
 
 class BufferedReader;
-class EventQueue;
 
 class AsyncMsgScanner {
 public:

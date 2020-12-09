@@ -174,15 +174,15 @@ void SessionCollection::relinquish(const Session *s_ref) {
 
 
 void SessionCollection::cleanUp() {
-    std::unique_lock ul{m};
     while (true) {
-        cond_gc.wait(ul, [this] {
-            return std::any_of(ss.cbegin(), ss.cend(),
-                               [](const auto &e) { return e->s.isGcReady(); });
+        const Session *s = gc_bq.deq();
+        std::unique_lock ul{m};
+        auto it = std::find_if(ss.cbegin(), ss.cend(), [&](const auto &e) {
+            return std::addressof(e->s) == s;
         });
-        ss.erase(std::remove_if(ss.begin(), ss.end(), [](const auto &e) {
-            return e->s.isGcReady();
-        }), ss.end());
+        if (it == ss.cend())
+            panic("can't find the session to be cleaned up");
+        ss.erase(it);
         if (ss.empty() && n_exp_session == 0) {
             cond_end.notify_all();
             break;
@@ -194,4 +194,8 @@ void SessionCollection::wait() {
     static std::mutex m_end;
     std::unique_lock ul{m_end};
     cond_end.wait(ul, [this]() { return n_exp_session == 0; });
+}
+
+void SessionCollection::notifyCleanUp(const Session *s) {
+    gc_bq.enq(s);
 }

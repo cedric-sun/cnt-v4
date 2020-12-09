@@ -4,42 +4,10 @@
 #define CNT5106_V4_EVENTQUEUE_HPP
 
 #include <memory>
-#include <mutex>
-#include <queue>
-#include <atomic>
-#include <condition_variable>
+#include "../../BlockingQueue.hpp"
 #include "Event.hpp"
 
-class EventQueue {
-private:
-    std::queue<std::unique_ptr<Event>> q;
-    mutable std::mutex m;
-    std::condition_variable cond;
-public:
-    EventQueue() {}
-
-    void enq(std::unique_ptr<Event> e) {
-        {
-            const std::lock_guard lg{m};
-            q.push(std::move(e));
-        }
-        if (q.size() == 1)
-            cond.notify_all();
-    }
-
-    std::unique_ptr<Event> deq() {
-        std::unique_lock ul{m};
-        cond.wait(ul, [&]() { return !q.empty(); });
-        auto eup = std::move(q.front());
-        q.pop();
-        return eup;
-    }
-
-    [[nodiscard]] bool isEmpty() const {
-        std::unique_lock ul{m};
-        return q.empty();
-    }
-};
+using EventQueue = BlockingQueue<std::unique_ptr<Event>>;
 
 
 #endif //CNT5106_V4_EVENTQUEUE_HPP
