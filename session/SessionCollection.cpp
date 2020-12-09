@@ -173,16 +173,16 @@ void SessionCollection::relinquish(const Session *s_ref) {
 }
 
 // TODO
-//  1. gc thread deadlock
-//  2. protocol thread notify but cleanUp is busy and is not waiting on cond_gc
+//      protocol thread notify but cleanUp is busy and is not waiting on cond_gc
 void SessionCollection::cleanUp() {
     std::unique_lock ul{m};
     while (true) {
         cond_gc.wait(ul, [this] {
-            return std::any_of(ss.cbegin(), ss.cend(), [](const auto &e) { return e->s.isDone(); });
+            return std::any_of(ss.cbegin(), ss.cend(),
+                               [](const auto &e) { return e->s.isGcReady(); });
         });
         ss.erase(std::remove_if(ss.begin(), ss.end(), [](const auto &e) {
-            return e->s.isDone();
+            return e->s.isGcReady();
         }), ss.end());
         if (ss.empty() && n_exp_session == 0) {
             cond_end.notify_all();

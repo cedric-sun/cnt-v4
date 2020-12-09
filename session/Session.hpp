@@ -46,8 +46,9 @@ private:
     std::mutex m_bcast;
     std::atomic_bool is_active{false};
     std::atomic_bool is_bcast_ready{false};
-    std::atomic_bool is_done{false};
+    std::atomic_bool is_gc_ready{false};
 
+    bool is_done{false};
     std::atomic_int peer_id;
     std::optional<PieceBitfield> peer_own;
     std::optional<AsyncMsgScanner> amsc;
@@ -141,8 +142,9 @@ public:
             eq.enq(std::make_unique<Event>(EventType::TimerUnchoke));
     }
 
-    [[nodiscard]] bool isDone() const {
-        return is_done;
+    // if this session is willing to be gc-ed
+    [[nodiscard]] bool isGcReady() const {
+        return is_gc_ready;
     }
 
     [[nodiscard]] bool isActive() const {

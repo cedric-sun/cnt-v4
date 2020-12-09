@@ -183,5 +183,6 @@ void Session::protocol() {
     if (amsc.has_value())
         amsc->stop();
     logger.sessionEnd(peer_id);
+    is_gc_ready = true;
     end_cb();
 }
