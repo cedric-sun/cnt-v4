@@ -162,8 +162,11 @@ void Session::protocol() {
                 if (!self_own.isRequested(piece_msg.piece_id))
                     panic("received a piece that self didn't request");
                 repo.save(piece_msg.piece_id, piece_msg.getPiece()); // moved
+                // setOwned() after pieceDownloaded() prevents fileDownloaded() log entry appearing
+                // before pieceDownloaded() of the last piece;
+                logger.pieceDownloaded(peer_id, piece_msg.piece_id,
+                                       self_own.numOwned() + 1);
                 self_own.setOwned(piece_msg.piece_id);
-                logger.pieceDownloaded(peer_id, piece_msg.piece_id, self_own.numOwned());
                 sc.broadcastHave(piece_msg.piece_id);
                 if (self_choke == ChokeStatus::Unchoked) {
                     requestNextIfPossible();
@@ -171,7 +174,6 @@ void Session::protocol() {
                 break;
         }
     }
-    logger.fileDownloaded();
     sc.relinquish(this);
     if (amsc.has_value())
         amsc->stop();

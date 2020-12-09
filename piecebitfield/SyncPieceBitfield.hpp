@@ -5,6 +5,7 @@
 
 #include "AbstractPieceBitfield.hpp"
 #include "PieceBitfieldSnapshot.hpp"
+#include "../Logger.hpp"
 #include <mutex>
 #include <atomic>
 
@@ -13,6 +14,7 @@ class SyncPieceBitfield : public AbstractPieceBitfield {
 private:
     std::atomic_int n_owned;
     mutable std::mutex m;
+    Logger &logger;
 public:
     void lock() const override {
         m.lock();
@@ -27,10 +29,13 @@ public:
     }
 
 public:
-    explicit SyncPieceBitfield(const int size, bool owningAllPiece)
+    explicit SyncPieceBitfield(const int size, bool owningAllPiece, Logger &logger)
             : AbstractPieceBitfield{
             std::vector(size, owningAllPiece ? PieceStatus::OWNED : PieceStatus::ABSENT)},
-              n_owned{owningAllPiece ? size : 0} {}
+              n_owned{owningAllPiece ? size : 0}, logger{logger} {
+        if (owningAllPiece)
+            logger.fileDownloaded();
+    }
 
     PieceBitfieldSnapshot snapshot() const {
         std::vector<PieceStatus> tmp(sv.size());
@@ -53,6 +58,8 @@ public:
         const std::lock_guard lg{m};
         if (sv[i] != PieceStatus::OWNED)
             n_owned++;
+        if (owningAll())
+            logger.fileDownloaded();
         sv[i] = PieceStatus::OWNED;
     }
 

@@ -66,7 +66,7 @@ int main(int argc, char **argv) {
         file_up = std::make_unique<NewFile>(config.getFilePath(), config.getFileSize());
     }
     SyncPieceBitfield spbf{MathUtils::ceilingDiv(config.getFileSize(), config.getPieceSize()),
-                           config.hasFile()};
+                           config.hasFile(),logger};
     PieceRepository repo{std::move(file_up), config.getPieceSize()};
     SessionCollection sc{config.totalPeerCount() - 1, config.getUnchokingInterval(),
                          config.getOptUnchokingInterval(), config.getNumPreferredNeighbors(),
