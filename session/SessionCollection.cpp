@@ -172,11 +172,9 @@ void SessionCollection::relinquish(const Session *s_ref) {
     }
 }
 
-// (2020/12/8 I can't replicate this bug anymore, everything just work fine now)
-//TODO
-// 1. either remove the reference to the just free-ed session here, or use weak_ptr in SnRefSet
-//      to avoid dangling reference_wrapper (the relinquish should be enough to remove it...?)
-// 2. downlaoded the complete file is a event of bitfield ; don't output it twice
+// TODO
+//  1. gc thread deadlock
+//  2. protocol thread notify but cleanUp is busy and is not waiting on cond_gc
 void SessionCollection::cleanUp() {
     std::unique_lock ul{m};
     while (true) {

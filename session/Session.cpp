@@ -76,6 +76,7 @@ void Session::requestNextIfPossible() {
     if (i != -1) {
         RequestMsg{i}.writeTo(bw);
         bw.flush();
+        logger.requestSentTo(peer_id, i);
     }
 }
 
@@ -136,8 +137,10 @@ void Session::protocol() {
             case EventType::MsgHave: {
                 auto have_msg = static_cast<HaveMsgEvent *>(e.get())->extract();
                 logger.haveReceived(peer_id, have_msg.piece_id);
-                if (peer_own->isOwned(have_msg.piece_id))
-                    panic("peer send HAVE for an piece index that self think peer already owned");
+                if (peer_own->isOwned(have_msg.piece_id)) {
+                    std::puts("=====bitfield | bcast sync problem remedy====");
+//                    panic("peer send HAVE for an piece index that self think peer already owned");
+                }
                 peer_own->setOwned(have_msg.piece_id);
                 if (self_own.owningAll() && peer_own->owningAll()) {
                     is_done = true;
@@ -153,8 +156,10 @@ void Session::protocol() {
                 auto req_msg = static_cast<RequestMsgEvent *>(e.get())->extract();
                 if (!self_own.isOwned(req_msg.piece_id))
                     panic("peer is requesting a piece self doesn't own");
+                logger.requestRecvFrom(peer_id, req_msg.piece_id);
                 PieceMsg{req_msg.piece_id, repo.get(req_msg.piece_id)}.writeTo(bw);
                 bw.flush();
+                logger.pieceSentTo(peer_id, req_msg.piece_id);
             }
                 break;
             case EventType::MsgPiece:

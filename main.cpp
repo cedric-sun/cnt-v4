@@ -83,6 +83,7 @@ int main(int argc, char **argv) {
                     try {
                         sc.newSession(Connection{peer.fqdn, peer.port}, peer.peer_id);
                     } catch (ConnectionError &) {
+                        logger.connTmpFailed(peer.peer_id);
                         continue;
                     }
                     conn_succ[i] = true;

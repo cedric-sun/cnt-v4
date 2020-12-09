@@ -91,7 +91,27 @@ public:
     }
 
     void sessionEnd(int peer_id) {
-        logPrintf("Session ends between Self [%d] and Peer [%d]\n", self_peer_id, peer_id);
+        logPrintf("SESSION END: (Self [%d] - Peer [%d])\n", self_peer_id, peer_id);
+    }
+
+    void requestSentTo(int peer_id, int piece_id) {
+        logPrintf("REQUEST SENT: from self [%d] to peer [%d], piece id = %d\n",
+                  self_peer_id, peer_id, piece_id);
+    }
+
+    void requestRecvFrom(int peer_id, int piece_id) {
+        logPrintf("REQUEST RECEIVED: from peer [%d] to self [%d], piece id = %d\n",
+                  peer_id, self_peer_id, piece_id);
+    }
+
+    void pieceSentTo(int peer_id, int piece_id) {
+        logPrintf("PIECE SENT: from self [%d] to peer [%d], piece id = %d\n",
+                  self_peer_id, peer_id, piece_id);
+    }
+
+    void connTmpFailed(int peer_id) {
+        logPrintf("Connection Temporary Failure: from self [%d] to peer [%d], retry later\n",
+                  self_peer_id, peer_id);
     }
 
 #undef logPrintf
