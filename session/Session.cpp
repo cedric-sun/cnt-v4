@@ -177,5 +177,6 @@ void Session::protocol() {
     sc.relinquish(this);
     if (amsc.has_value())
         amsc->stop();
+    logger.sessionEnd(peer_id);
     end_cb();
 }

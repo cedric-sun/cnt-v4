@@ -7,10 +7,11 @@
 #include <unistd.h>
 
 void panic(const std::string &msg) {
-    if (errno != 0)
+    if (errno != 0) {
         std::perror(msg.c_str());
-    else
-        fputs(msg.c_str(), ::stderr);
+    } else {
+        fputs((msg + '\n').c_str(), ::stderr);
+    }
     void *frame_ret[PANIC_BACKTRACE_FRAME_N];
     ::backtrace(frame_ret, PANIC_BACKTRACE_FRAME_N);
     ::backtrace_symbols_fd(frame_ret, PANIC_BACKTRACE_FRAME_N, STDERR_FILENO);

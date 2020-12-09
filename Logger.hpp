@@ -90,6 +90,10 @@ public:
         logPrintf("Peer [%d] has downloaded the complete file.\n", self_peer_id);
     }
 
+    void sessionEnd(int peer_id) {
+        logPrintf("Session ends between Self [%d] and Peer [%d]\n", self_peer_id, peer_id);
+    }
+
 #undef logPrintf
 };
 
