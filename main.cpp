@@ -9,6 +9,7 @@
 #include "Logger.hpp"
 #include "piecebitfield/SyncPieceBitfield.hpp"
 #include "utils/MathUtils.hpp"
+#include "tcp/ConnectionError.hpp"
 
 [[noreturn]] static void printUsageAndExit(char *argv0) {
     fprintf(stderr, "Usage: %s <peerID>\n", argv0);
@@ -71,8 +72,26 @@ int main(int argc, char **argv) {
                          config.getOptUnchokingInterval(), config.getNumPreferredNeighbors(),
                          self_peer_id, spbf, repo, logger};
     startServer(config.getPort(), sc);
-    for (const auto &pi : config.getPriorPeers()) {
-        sc.newSession(Connection{pi.fqdn, pi.port}, pi.peer_id);
+    {
+        const auto &prior_peers = config.getPriorPeers();
+        int n_unsucc_conn = prior_peers.size();
+        std::vector<bool> conn_succ(n_unsucc_conn, false);
+        while (n_unsucc_conn > 0) {
+            for (int i = 0; i < conn_succ.size(); ++i) {
+                if (!conn_succ[i]) {
+                    const auto &peer = prior_peers[i];
+                    try {
+                        sc.newSession(Connection{peer.fqdn, peer.port}, peer.peer_id);
+                    } catch (ConnectionError &) {
+                        continue;
+                    }
+                    conn_succ[i] = true;
+                    n_unsucc_conn--;
+                }
+            }
+            using namespace std::chrono_literals;
+            std::this_thread::sleep_for(1s);
+        }
     }
     sc.wait();
     return 0;

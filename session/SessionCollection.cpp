@@ -120,8 +120,10 @@ void SessionCollection::tryPreempt(const Session *const s_ref) {
     if (!wrapper_sn.has_value())
         panic("tryPreempt() on an unknown session address");
     if (pn_set.size() < n_pn) {
-        if (pn_set.contains(*wrapper_sn))
-            panic("the preempting session is already a pn.");
+        if (pn_set.contains(*wrapper_sn)) {
+            //panic("the preempting session is already a pn.");
+            std::puts("===========the preempting session is already a pn.============");
+        }
         pn_set.add(*wrapper_sn);
         wrapper_sn->get().s.unchoke();
         return;
@@ -163,6 +165,7 @@ void SessionCollection::relinquish(const Session *s_ref) {
     }
 }
 
+// (2020/12/8 I can't replicate this bug anymore, everything just work fine now)
 //TODO
 // 1. either remove the reference to the just free-ed session here, or use weak_ptr in SnRefSet
 //      to avoid dangling reference_wrapper (the relinquish should be enough to remove it...?)

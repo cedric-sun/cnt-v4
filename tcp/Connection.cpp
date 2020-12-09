@@ -1,6 +1,7 @@
 // cesun, 11/26/20 2:14 AM.
 
 #include "Connection.hpp"
+#include "ConnectionError.hpp"
 #include <netdb.h>
 
 Connection::Connection(const std::string &fqdn, int port) {
@@ -16,7 +17,7 @@ Connection::Connection(const std::string &fqdn, int port) {
     if (fd == -1)
         panic("socket");
     if (::connect(fd, res->ai_addr, res->ai_addrlen) == -1)
-        panic("connect");
+        throw ConnectionError{};
     ::freeaddrinfo(res);
 }
 
