@@ -23,6 +23,9 @@ std::unique_ptr<ActualMsg> ActualMsg::readFrom(BufferedReader &r) {
         case MsgType::NotInterested:
             ret = std::make_unique<NotInterestedMsg>();
             break;
+        case MsgType::TearDown:
+            ret = std::make_unique<TearDownMsg>();
+            break;
         case MsgType::Have:
             ret = std::make_unique<HaveMsg>(read32ntohl(r));
             break;

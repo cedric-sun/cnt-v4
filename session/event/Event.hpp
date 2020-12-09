@@ -6,7 +6,7 @@
 enum class EventType {
     TimerChoke,TimerUnchoke, BcastHave, MsgChoke, MsgUnchoke,
     MsgInterest, MsgNotInterest, MsgHave, MsgRequest,
-    MsgPiece
+    MsgPiece,MsgTearDown
 };
 
 class Event {

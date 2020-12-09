@@ -13,7 +13,7 @@
 class EventQueue {
 private:
     std::queue<std::unique_ptr<Event>> q;
-    std::mutex m;
+    mutable std::mutex m;
     std::condition_variable cond;
 public:
     EventQueue() {}
@@ -33,6 +33,11 @@ public:
         auto eup = std::move(q.front());
         q.pop();
         return eup;
+    }
+
+    [[nodiscard]] bool isEmpty() const {
+        std::unique_lock ul{m};
+        return q.empty();
     }
 };
 

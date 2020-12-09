@@ -4,7 +4,8 @@
 #define CNT5106_V4_MSGTYPE_HPP
 
 enum class MsgType {
-    Choke, Unchoke, Interested, NotInterested, Have, Bitfield, Request, Piece
+    Choke, Unchoke, Interested, NotInterested, Have, Bitfield, Request, Piece,
+    TearDown = 99
 };
 
 

@@ -8,7 +8,8 @@
 template<MsgType MT>
 class ZeroMsg : public ActualMsg {
     static_assert(MT == MsgType::Choke || MT == MsgType::Unchoke
-                  || MT == MsgType::Interested || MT == MsgType::NotInterested,
+                  || MT == MsgType::Interested || MT == MsgType::NotInterested ||
+                  MT == MsgType::TearDown,
                   "Specified MsgType is not a ZeroMsg");
 protected:
     [[nodiscard]] int payloadSize() const override { return 0; }

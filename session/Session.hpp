@@ -80,6 +80,8 @@ private:
 
     void protocol();
 
+    void handleBcast(BcastHaveEvent &e);
+
     void requestNextIfPossible();
 
 public:

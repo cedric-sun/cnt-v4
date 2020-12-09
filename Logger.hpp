@@ -94,6 +94,14 @@ public:
         logPrintf("SESSION END: (Self [%d] - Peer [%d])\n", self_peer_id, peer_id);
     }
 
+    void tearDownReceived(int peer_id) {
+        logPrintf("TearDown Received from peer [%d]\n", peer_id);
+    }
+
+    void sendingBcastTo(int peer_id, int piece_id) {
+        logPrintf("Sending Bcast Have [piece id = %d] to peer [%d]\n", piece_id, peer_id);
+    }
+
     void requestSentTo(int peer_id, int piece_id) {
         logPrintf("REQUEST SENT: from self [%d] to peer [%d], piece id = %d\n",
                   self_peer_id, peer_id, piece_id);

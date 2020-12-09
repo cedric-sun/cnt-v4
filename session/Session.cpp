@@ -38,7 +38,7 @@ void Session::setup() {
         peer_own.emplace(bf_msg->extract());
         if (peer_own->owningAll() && self_own.owningAll()) {
             is_done = true;
-            return;
+//            return;
         }
     }
     if ((*peer_own - self_own).empty()) {
@@ -80,6 +80,17 @@ void Session::requestNextIfPossible() {
     }
 }
 
+
+void Session::handleBcast(BcastHaveEvent &e) {
+    int piece_id = e.piece_id;
+    HaveMsg{piece_id}.writeTo(bw);
+    logger.sendingBcastTo(peer_id, piece_id);
+    if ((*peer_own - self_own).empty()) {
+        NotInterestedMsg{}.writeTo(bw);
+    }
+    bw.flush();
+}
+
 void Session::protocol() {
     setup();
     while (!is_done) {
@@ -99,11 +110,7 @@ void Session::protocol() {
                 }
                 break;
             case EventType::BcastHave:
-                HaveMsg{static_cast<BcastHaveEvent *>(e.get())->piece_id}.writeTo(bw);
-                if ((*peer_own - self_own).empty()) {
-                    NotInterestedMsg{}.writeTo(bw);
-                }
-                bw.flush();
+                handleBcast(static_cast<BcastHaveEvent &>(*e));
                 if (self_own.owningAll() && peer_own->owningAll()) {
                     is_done = true;
                     break;
@@ -162,7 +169,7 @@ void Session::protocol() {
                 logger.pieceSentTo(peer_id, req_msg.piece_id);
             }
                 break;
-            case EventType::MsgPiece:
+            case EventType::MsgPiece: {
                 auto piece_msg = static_cast<PieceMsgEvent *>(e.get())->extract();
                 if (!self_own.isRequested(piece_msg.piece_id))
                     panic("received a piece that self didn't request");
@@ -176,8 +183,36 @@ void Session::protocol() {
                 if (self_choke == ChokeStatus::Unchoked) {
                     requestNextIfPossible();
                 }
+            }
+                break;
+            case EventType::MsgTearDown:
+                panic("premature teardown received");
                 break;
         }
+    }
+    // handle the infamous spurious end
+    {
+        // wait potentially unfinished broadcast from other control thread
+        using namespace std::chrono_literals;
+        std::this_thread::sleep_for(1s);
+    }
+    bool td_received = false;
+    while (!eq.isEmpty()) {
+        if (auto e = eq.deq();e->event_type == EventType::BcastHave) {
+            handleBcast(static_cast<BcastHaveEvent &>(*e));
+        } else if (e->event_type == EventType::MsgTearDown) {
+            logger.tearDownReceived(peer_id);
+            td_received = true;
+            break;
+        }
+    }
+    TearDownMsg{}.writeTo(bw);
+    bw.flush();
+    if (!td_received) {
+        // ignoring all non-teardown msg
+        for(auto e = eq.deq();e->event_type != EventType::MsgTearDown;e = eq.deq())
+            ;
+        logger.tearDownReceived(peer_id);
     }
     sc.relinquish(this);
     if (amsc.has_value())

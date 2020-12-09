@@ -172,8 +172,7 @@ void SessionCollection::relinquish(const Session *s_ref) {
     }
 }
 
-// TODO
-//      protocol thread notify but cleanUp is busy and is not waiting on cond_gc
+
 void SessionCollection::cleanUp() {
     std::unique_lock ul{m};
     while (true) {

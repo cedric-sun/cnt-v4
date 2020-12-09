@@ -11,6 +11,7 @@ using ChokeMsg = ZeroMsg<MsgType::Choke>;
 using UnchokeMsg = ZeroMsg<MsgType::Unchoke>;
 using InterestedMsg = ZeroMsg<MsgType::Interested>;
 using NotInterestedMsg = ZeroMsg<MsgType::NotInterested>;
+using TearDownMsg = ZeroMsg<MsgType::TearDown>;
 using HaveMsg = IndexMsg<MsgType::Have>;
 using RequestMsg = IndexMsg<MsgType::Request>;
 

@@ -30,6 +30,9 @@ void AsyncMsgScanner::scanLoop() {
             case MsgType::NotInterested:
                 q.enq(std::make_unique<Event>(EventType::MsgNotInterest));
                 break;
+            case MsgType::TearDown:
+                q.enq(std::make_unique<Event>(EventType::MsgTearDown));
+                break;
             case MsgType::Have: {
                 auto have_msg = std::move(*static_cast<HaveMsg *>(amsg_up.get()));
                 q.enq(std::make_unique<HaveMsgEvent>(std::move(have_msg)));

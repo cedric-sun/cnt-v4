@@ -151,9 +151,13 @@ public:
 
     void newSession(Connection &&conn, const int expected_peer_id) {
         std::lock_guard lg{m};
+        static auto cb_notify_cleanup = [&]() {
+            // MUST acquire the lock to make sure that gc thread is waiting on cond_gc
+            std::lock_guard lg{m};
+            cond_gc.notify_all();
+        };
         auto sn_up = std::make_unique<Sn>(self_peer_id, expected_peer_id, std::move(conn), repo,
-                                          self_own, [&]() { cond_gc.notify_all(); },
-                                          *this, logger);
+                                          self_own, cb_notify_cleanup, *this, logger);
         ss.push_back(std::move(sn_up));
         ss.back()->s.start();
         n_exp_session--;
