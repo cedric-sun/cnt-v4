@@ -108,6 +108,9 @@ void SessionCollection::optAlgorithm() {
     logger.newOptUnchokedNeighbor(opt->get().s.getPeerID());
 }
 
+// if s_ref is already one of pn or opt, does nothing;
+// otherwise, make s_ref a pn or opt if we have empty seat
+// so that self can upload piece to it immediately
 void SessionCollection::tryPreempt(const Session *const s_ref) {
     const std::lock_guard lg{m};
     std::optional<std::reference_wrapper<Sn>> wrapper_sn;
@@ -119,11 +122,15 @@ void SessionCollection::tryPreempt(const Session *const s_ref) {
     }
     if (!wrapper_sn.has_value())
         panic("tryPreempt() on an unknown session address");
+    if (pn_set.contains(*wrapper_sn)) {
+        std::puts("===========the preempting session is already a pn.===========");
+        return;
+    }
+    if (opt.has_value() && std::addressof(opt->get()) == std::addressof(wrapper_sn->get())) {
+        std::puts("===========the preempting session is already an opt.===========");
+        return;
+    }
     if (pn_set.size() < n_pn) {
-        if (pn_set.contains(*wrapper_sn)) {
-            //panic("the preempting session is already a pn.");
-            std::puts("===========the preempting session is already a pn.============");
-        }
         pn_set.add(*wrapper_sn);
         wrapper_sn->get().s.unchoke();
         return;
