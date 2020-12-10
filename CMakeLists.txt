@@ -12,13 +12,13 @@ add_compile_definitions(BUFFERED_READER_BUFSZ=65536) #64 KiB
 add_compile_definitions(BUFFERED_WRITER_BUFSZ=65536) #64 KiB
 add_compile_definitions(PIECE_CACHE_SIZE=16777216) # 16 MiB
 
-set (CMAKE_CXX_FLAGS_DEBUG
+set(CMAKE_CXX_FLAGS_DEBUG
         "${CMAKE_CXX_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address -ggdb")
-set (CMAKE_LINKER_FLAGS_DEBUG
+set(CMAKE_LINKER_FLAGS_DEBUG
         "${CMAKE_LINKER_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
 
 # choose the config suite to use
-set(CNT_CONFIG_SUITE "testconfig2")
+set(CNT_CONFIG_SUITE "cise-testconfig1")
 
 set(CNT_PROJECT_DIR "cnt_project")
 
@@ -31,6 +31,7 @@ add_custom_target(cnt_project_copy_config
 
 add_dependencies(cnt_project_copy_config cnt_clean)
 
+FILE(COPY script/demo.sh DESTINATION .)
 add_executable(peerProcess
         piecebitfield/PieceBitfield.cpp
         piecebitfield/AbstractPieceBitfield.cpp
