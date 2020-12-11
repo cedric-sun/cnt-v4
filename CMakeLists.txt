@@ -12,13 +12,13 @@ add_compile_definitions(BUFFERED_READER_BUFSZ=65536) #64 KiB
 add_compile_definitions(BUFFERED_WRITER_BUFSZ=65536) #64 KiB
 add_compile_definitions(PIECE_CACHE_SIZE=16777216) # 16 MiB
 
-#set(CMAKE_CXX_FLAGS_DEBUG
- #       "${CMAKE_CXX_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address -ggdb")
-#set(CMAKE_LINKER_FLAGS_DEBUG
- #       "${CMAKE_LINKER_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
+set(CMAKE_CXX_FLAGS_DEBUG
+        "${CMAKE_CXX_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address -ggdb")
+set(CMAKE_LINKER_FLAGS_DEBUG
+        "${CMAKE_LINKER_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
 
 # choose the config suite to use
-set(CNT_CONFIG_SUITE "testconfig-20MiB-9peers")
+set(CNT_CONFIG_SUITE "testconfig-20MiB-3peers")
 
 set(CNT_PROJECT_DIR "cnt_project")
 
@@ -55,4 +55,5 @@ set_target_properties(peerProcess PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CNT_PROJ
 
 add_dependencies(peerProcess cnt_project_copy_config)
 
-target_link_libraries(peerProcess PRIVATE Threads::Threads)
+include(FindOpenSSL)
+target_link_libraries(peerProcess PRIVATE Threads::Threads OpenSSL::SSL)

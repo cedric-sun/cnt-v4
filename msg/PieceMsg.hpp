@@ -7,6 +7,7 @@
 #include "ActualMsg.hpp"
 #include "../storage/Piece.hpp"
 #include "../utils/class_utils.hpp"
+#include <openssl/md5.h>
 
 class PieceMsg : public ActualMsg {
 private:
@@ -26,11 +27,15 @@ public:
 
 protected:
     [[nodiscard]] int payloadSize() const override {
-        return 4 + piece->size();
+        return 4 + MD5_DIGEST_LENGTH + piece->size();
     }
 
     void writePayloadTo(BufferedWriter &w) const override {
         write32htonl(w, piece_id);
+        // TODO: cache md5 result instead of computing it every time
+        std::array<Byte, MD5_DIGEST_LENGTH> md5_buf;
+        ::MD5(piece->data(), piece->size(), md5_buf.data());
+        w.write(md5_buf.data(), md5_buf.size());
         w.write(piece->data(), piece->size());
     }
 };
