@@ -21,8 +21,7 @@ public:
             const std::lock_guard lg{m};
             q.push(std::move(e));
         }
-        if (q.size() == 1)
-            cond.notify_all();
+        cond.notify_one();
     }
 
     T deq() {

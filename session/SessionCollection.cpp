@@ -26,10 +26,11 @@ static void setInterval(CallBackFunc cb, const int sec) {
 }
 
 
-SessionCollection::SessionCollection(int n_exp_session, int pn_interval, int opt_interval, int n_pn,
-                                     int self_peer_id, SyncPieceBitfield &self_own,
+SessionCollection::SessionCollection(int n_unfinished_session, int pn_interval, int opt_interval,
+                                     int n_pn, int self_peer_id, SyncPieceBitfield &self_own,
                                      PieceRepository &repo, Logger &logger)
-        : n_exp_session{n_exp_session}, n_pn{n_pn}, self_peer_id{self_peer_id}, self_own{self_own},
+        : n_unfinished_session{n_unfinished_session}, n_pn{n_pn}, self_peer_id{self_peer_id},
+          self_own{self_own},
           repo{repo}, logger{logger} {
     setInterval([this] { pnAlgorithm(); }, pn_interval);
     setInterval([this] { optAlgorithm(); }, opt_interval);
@@ -183,7 +184,8 @@ void SessionCollection::cleanUp() {
         if (it == ss.cend())
             panic("can't find the session to be cleaned up");
         ss.erase(it);
-        if (ss.empty() && n_exp_session == 0) {
+        n_unfinished_session--;
+        if (ss.empty() && n_unfinished_session == 0) {
             cond_end.notify_all();
             break;
         }
@@ -193,7 +195,7 @@ void SessionCollection::cleanUp() {
 void SessionCollection::wait() {
     static std::mutex m_end;
     std::unique_lock ul{m_end};
-    cond_end.wait(ul, [this]() { return n_exp_session == 0; });
+    cond_end.wait(ul, [this]() { return n_unfinished_session == 0; });
 }
 
 void SessionCollection::notifyCleanUp(const Session *s) {

@@ -18,7 +18,7 @@ add_compile_definitions(PIECE_CACHE_SIZE=16777216) # 16 MiB
  #       "${CMAKE_LINKER_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
 
 # choose the config suite to use
-set(CNT_CONFIG_SUITE "testconfig2")
+set(CNT_CONFIG_SUITE "testconfig-20MiB-9peers")
 
 set(CNT_PROJECT_DIR "cnt_project")
 
