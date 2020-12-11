@@ -4,10 +4,12 @@
 #define CNT5106_V4_NEWFILE_HPP
 
 #include "File.hpp"
+#include <mutex>
 
 class NewFile : public File {
 private:
     const int64_t mSize;
+    mutable std::mutex fseek_fwrite_atomicity_mutex;
 
     static FILE *openNew(const std::string &path) {
         FILE *f = std::fopen(path.c_str(), "w+");
@@ -21,6 +23,7 @@ public:
             : File{openNew(path)}, mSize{size} {}
 
     void writeAt(int64_t pos, const void *buf, int64_t length) override {
+        const std::lock_guard lg{fseek_fwrite_atomicity_mutex};
         if (std::fseek(f, pos, SEEK_SET) != 0)
             panic("fseek failed");
         if (std::fwrite(buf, 1, length, f) != length)

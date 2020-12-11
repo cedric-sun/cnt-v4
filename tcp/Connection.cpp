@@ -18,6 +18,6 @@ Connection::Connection(const std::string &fqdn, int port) {
         panic("socket");
     if (::connect(fd, res->ai_addr, res->ai_addrlen) == -1)
         throw ConnectionError{};
-    ::freeaddrinfo(res);
+    ::freeaddrinfo(res); // TODO: fix leak
 }
 

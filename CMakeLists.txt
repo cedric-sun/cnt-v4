@@ -18,7 +18,7 @@ set(CMAKE_LINKER_FLAGS_DEBUG
         "${CMAKE_LINKER_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
 
 # choose the config suite to use
-set(CNT_CONFIG_SUITE "testconfig-20MiB-3peers")
+set(CNT_CONFIG_SUITE "testconfig-20MiB-9peers")
 
 set(CNT_PROJECT_DIR "cnt_project")
 
