@@ -20,8 +20,8 @@ std::shared_ptr<Piece> PieceRepository::get(const int i) {
             return it->second;
         }
     }
-    auto begin = i * piece_size;
-    auto size = std::min(piece_size, f->size() - begin);
+    const auto begin = i * piece_size;
+    const auto size = std::min(piece_size, f->size() - begin);
     std::vector<Byte> bytes(size);
     f->readAt(begin, bytes.data(), size); // heavy IO
     auto piece_sp = std::make_shared<Piece>(std::move(bytes));
@@ -29,14 +29,15 @@ std::shared_ptr<Piece> PieceRepository::get(const int i) {
         const std::lock_guard writer_lock(m_cache);
         ensureSpace(size);
         cache.emplace(i, piece_sp);
+        n_cached_byte += size;
     }
     return piece_sp; // implicitly moved
 }
 
 // precond: piece i is REQUESTED
 void PieceRepository::save(int i, std::shared_ptr<Piece> piece_up) {
-    auto begin = i * piece_size;
-    auto expected_size = std::min(piece_size, f->size() - begin);
+    const auto begin = i * piece_size;
+    const auto expected_size = std::min(piece_size, f->size() - begin);
     if (piece_up->size() != expected_size)
         panic("unexpected piece size");
     f->writeAt(begin, piece_up->data(), piece_up->size());
@@ -44,5 +45,6 @@ void PieceRepository::save(int i, std::shared_ptr<Piece> piece_up) {
         const std::lock_guard writer_lock{m_cache};
         ensureSpace(piece_up->size());
         cache.emplace(i, std::shared_ptr<Piece>{std::move(piece_up)});
+        n_cached_byte += expected_size;
     }
 }
