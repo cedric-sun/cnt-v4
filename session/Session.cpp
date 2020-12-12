@@ -145,7 +145,7 @@ void Session::protocol() {
                 auto have_msg = static_cast<HaveMsgEvent *>(e.get())->extract();
                 logger.haveReceived(peer_id, have_msg.piece_id);
                 if (peer_own->isOwned(have_msg.piece_id)) {
-                    std::puts("=====bitfield | bcast sync problem remedy====");
+//                    std::puts("=====bitfield | bcast sync problem remedy====");
 //                    panic("peer send HAVE for an piece index that self think peer already owned");
                 }
                 peer_own->setOwned(have_msg.piece_id);

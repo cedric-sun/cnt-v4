@@ -45,7 +45,7 @@ public:
             // way to do connection tear-down. At this moment the session is about to end,
             // and this thread should soon receive a pthread_cancel; we sleep here to prevent
             // busy waiting.
-            std::puts("==============peer closed the socket.=================");
+//            std::puts("==============peer closed the socket.=================");
             ::sleep(1);
         }
         recv_bcnt += n;

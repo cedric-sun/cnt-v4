@@ -124,11 +124,11 @@ void SessionCollection::tryPreempt(const Session *const s_ref) {
     if (!wrapper_sn.has_value())
         panic("tryPreempt() on an unknown session address");
     if (pn_set.contains(*wrapper_sn)) {
-        std::puts("===========the preempting session is already a pn.===========");
+//        std::puts("===========the preempting session is already a pn.===========");
         return;
     }
     if (opt.has_value() && std::addressof(opt->get()) == std::addressof(wrapper_sn->get())) {
-        std::puts("===========the preempting session is already an opt.===========");
+//        std::puts("===========the preempting session is already an opt.===========");
         return;
     }
     if (pn_set.size() < n_pn) {

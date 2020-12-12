@@ -14,7 +14,7 @@ void AsyncMsgScanner::scanLoop() {
         try {
             amsg_up = ActualMsg::readFrom(br);
         } catch (abi::__forced_unwind &) {
-            std::puts("scanLoop cancel exceptoin caputred.");
+//            std::puts("scanLoop cancel exceptoin caputred.");
             throw;
         }
         switch (amsg_up->type) {

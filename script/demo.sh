@@ -9,6 +9,5 @@ scp "${TARBALL}" storm:cnt
 ssh storm "cd cnt; tar xf ${TARBALL}; cd ${DIRNAME}"
 
 for node in {00..08};do
-    ssh "lin114-${node}.cise.ufl.edu" \
-        "cd cnt/${DIRNAME}; ./peerProcess $((10${node}+1)) | tee &"
+    ssh "lin114-${node}.cise.ufl.edu" "cd cnt/${DIRNAME}; ./peerProcess $((10${node}+1)) | tee &"
 done
