@@ -28,7 +28,8 @@ private:
 public:
     Logger(const int self_peer_id, const std::string &path)
             : self_peer_id{self_peer_id} {
-        log_stream = stdout;//std::fopen(path.c_str(), "w");
+        log_stream = std::fopen(path.c_str(), "w");
+        ::setvbuf(log_stream, nullptr, _IOLBF, 0);
         if (log_stream == nullptr)
             panic("can't open log file for write");
     }

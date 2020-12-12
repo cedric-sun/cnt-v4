@@ -18,7 +18,7 @@ set(CMAKE_LINKER_FLAGS_DEBUG
         "${CMAKE_LINKER_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
 
 # choose the config suite to use
-set(CNT_CONFIG_SUITE "testconfig-20MiB-9peers")
+set(CNT_CONFIG_SUITE "cise-testconfig1")
 
 set(CNT_PROJECT_DIR "cnt_project")
 
@@ -32,6 +32,8 @@ add_custom_target(cnt_project_copy_config
 add_dependencies(cnt_project_copy_config cnt_clean)
 
 FILE(COPY script/demo.sh DESTINATION .)
+FILE(COPY script/remote-killall.sh DESTINATION .)
+
 add_executable(peerProcess
         piecebitfield/PieceBitfield.cpp
         piecebitfield/AbstractPieceBitfield.cpp
